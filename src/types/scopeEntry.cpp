@@ -1,9 +1,14 @@
+// EN: Implementation of the ScopeEntry class. Handles construction and printing of a scope entry.
+// FR : Implémentation de la classe ScopeEntry. Gère la construction et l'affichage d'une entrée de scope.
+
 #include "../include/types/scopeEntry.hpp"
 
 #include <ostream>
 
 namespace ScopeEntry {
 
+// EN: Constructor. Initializes all fields of a scope entry.
+// FR : Constructeur. Initialise tous les champs d'une entrée de scope.
 ScopeEntry::ScopeEntry(const std::string& identifier,
                        const std::string& asset_type,
                        const std::variant<int, double, std::string>& instruction,
@@ -29,6 +34,8 @@ ScopeEntry::ScopeEntry(const std::string& identifier,
       created_at(created_at),
       updated_at(updated_at) {}
 
+// EN: Output operator. Prints all fields of a scope entry.
+// FR : Opérateur d'affichage. Affiche tous les champs d'une entrée de scope.
 std::ostream& operator<<(std::ostream& os, const ScopeEntry& entry) {
     os << "identifier: " << entry.getIdentifier() << ", ";
     os << "asset_type: " << entry.getAssetType() << ", ";
