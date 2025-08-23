@@ -1,0 +1,44 @@
+# BB-Pipeline - yamllint configuration
+# YAML linting rules
+
+extends: default
+
+rules:
+  # Allow longer lines for readability
+  line-length:
+    max: 120
+    level: warning
+
+  # Allow multiple spaces for alignment
+  key-duplicates: enable
+  
+  # Indentation rules
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Comments
+  comments:
+    min-spaces-from-content: 1
+
+  # Document rules
+  document-start:
+    present: false  # Don't require ---
+    
+  # Brackets and braces
+  brackets:
+    max-spaces-inside: 1
+    min-spaces-inside: 0
+
+  braces:
+    max-spaces-inside: 1
+    min-spaces-inside: 0
+
+  # Truthy values (allow yes/no, on/off)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+
+ignore: |
+  .github/workflows/
+  build/

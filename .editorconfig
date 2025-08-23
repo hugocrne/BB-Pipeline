@@ -1,0 +1,77 @@
+# BB-Pipeline - EditorConfig
+# Configuration universelle pour tous les éditeurs
+# https://editorconfig.org
+
+root = true
+
+# Paramètres par défaut
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+# C++ files
+[*.{cpp,hpp,cc,cxx,h,hxx}]
+indent_size = 4
+max_line_length = 100
+
+# CMake
+[{CMakeLists.txt,*.cmake}]
+indent_size = 4
+
+# Shell scripts  
+[*.sh]
+indent_size = 4
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# Markdown
+[*.md]
+indent_size = 2
+trim_trailing_whitespace = false
+
+# CSV files
+[*.csv]
+trim_trailing_whitespace = false
+
+# Configuration files
+[*.{conf,config,ini}]
+indent_size = 4
+
+# Makefiles
+[{Makefile,*.mk}]
+indent_style = tab
+indent_size = 4
+
+# Git files
+[{.gitignore,.gitattributes,.gitkeep}]
+indent_size = 2
+
+# Docker files
+[{Dockerfile,docker-compose.yml}]
+indent_size = 2
+
+# Python (pour les scripts de build)
+[*.py]
+indent_size = 4
+max_line_length = 88
+
+# JavaScript/TypeScript (pour les outils de build)
+[*.{js,ts,jsx,tsx}]
+indent_size = 2
+
+# XML/HTML
+[*.{xml,html}]
+indent_size = 2
+
+# License files
+[LICENSE]
+trim_trailing_whitespace = false

@@ -1,0 +1,135 @@
+# BB-Pipeline - Pre-commit hooks configuration
+# Automatic code quality checks before each commit
+
+repos:
+  # C++ Formatting
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+      - id: clang-format
+        files: \.(cpp|hpp|cc|cxx|c|h)$
+        args: [--style=file]
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: \.(sh|bash)$
+        args: [--severity=warning]
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Prevent large files
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      
+      # Check file syntax
+      - id: check-ast  # Python
+      - id: check-json
+      - id: check-yaml
+      - id: check-xml
+      
+      # Fix common issues
+      - id: trailing-whitespace
+        exclude: \.(md|csv)$
+      - id: end-of-file-fixer
+        exclude: \.(csv|log)$
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      
+      # Security checks
+      - id: detect-private-key
+      - id: check-merge-conflict
+      
+      # Git checks
+      - id: check-case-conflict
+      - id: check-symlinks
+
+  # YAML validation
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        files: \.(yml|yaml)$
+        args: [-c=.yamllint.yml]
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        files: \.md$
+        args: [--fix]
+
+  # Remove unused imports/variables (Python scripts)
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        files: \.py$
+        args: [--remove-all-unused-imports, --in-place]
+
+  # Custom hooks specific to BB-Pipeline
+  - repo: local
+    hooks:
+      # Validate CSV schemas
+      - id: validate-csv-schemas
+        name: Validate CSV Schemas
+        entry: bash -c 'for f in schemas/*.csv; do head -1 "$f" | grep -q "schema_ver" || { echo "Missing schema_ver in $f"; exit 1; }; done'
+        language: system
+        files: schemas/.*\.csv$
+        pass_filenames: false
+
+      # Check script executability
+      - id: check-script-executable
+        name: Check Script Executable
+        entry: bash -c 'for f in scripts/*.sh tests/*.sh; do [ -x "$f" ] || { echo "$f is not executable"; exit 1; }; done'
+        language: system
+        files: (scripts|tests)/.*\.sh$
+        pass_filenames: false
+
+      # Validate wordlists format
+      - id: validate-wordlists
+        name: Validate Wordlists
+        entry: bash -c '
+          # Check subs.txt (alphanumeric + dash/underscore)
+          if ! head -10 wordlists/subs.txt | grep -E "^[a-zA-Z0-9_-]+$" >/dev/null; then
+            echo "Invalid format in wordlists/subs.txt"
+            exit 1
+          fi
+          # Check paths.txt (must start with /)
+          if ! head -10 wordlists/paths.txt | grep -E "^/" >/dev/null; then
+            echo "Invalid format in wordlists/paths.txt" 
+            exit 1
+          fi
+        '
+        language: system
+        files: wordlists/.*\.(txt|patterns)$
+        pass_filenames: false
+
+      # Build test (quick)
+      - id: build-test
+        name: Quick Build Test
+        entry: bash -c 'timeout 120 make build >/dev/null 2>&1 || { echo "Build failed"; exit 1; }'
+        language: system
+        files: (src|include|CMakeLists\.txt)
+        pass_filenames: false
+
+# Configuration for specific tools
+exclude: |
+  (?x)^(
+    build/.*|
+    \.git/.*|
+    out/.*\.csv|
+    tests/logs/.*|
+    .*\.log
+  )$
+
+default_stages: [commit]
+fail_fast: false
+
+# Minimum supported pre-commit version
+minimum_pre_commit_version: "2.15.0"

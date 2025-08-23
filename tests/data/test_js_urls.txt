@@ -1,0 +1,4 @@
+https://example.com/assets/main.js
+https://example.com/js/app.js
+https://api.example.com/v1/client.js
+https://example.com/static/bundle.js

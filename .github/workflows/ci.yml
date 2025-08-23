@@ -1,0 +1,275 @@
+# BB-Pipeline - CI/CD Pipeline
+# Automated testing, building, and deployment
+
+name: 🛰️ CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  BUILD_TYPE: Release
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+
+jobs:
+  # === Code Quality Checks ===
+  code-quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck clang-format
+    
+    - name: Check shell scripts
+      run: |
+        find scripts tests -name "*.sh" -exec shellcheck {} \;
+    
+    - name: Check C++ formatting
+      run: |
+        find src include -name "*.cpp" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
+    
+    - name: Validate configurations
+      run: |
+        python3 -c "
+        import yaml, json, os
+        # Validate YAML configs
+        with open('configs/defaults.yaml') as f: yaml.safe_load(f)
+        with open('configs/scoring.yaml') as f: yaml.safe_load(f)
+        print('✅ All configurations valid')
+        "
+
+  # === Multi-platform Build & Test ===
+  build-test:
+    name: 🏗️ Build & Test
+    needs: code-quality
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Debug, Release]
+        include:
+          - os: ubuntu-latest
+            deps_cmd: |
+              sudo apt-get update
+              sudo apt-get install -y cmake ninja-build libboost-all-dev libssl-dev \
+                nlohmann-json3-dev libspdlog-dev libgumbo-dev libyaml-cpp-dev libcurl4-openssl-dev
+          - os: macos-latest
+            deps_cmd: |
+              brew install cmake ninja boost openssl nlohmann-json spdlog gumbo-parser yaml-cpp curl
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: ${{ matrix.deps_cmd }}
+    
+    - name: Configure CMake
+      run: |
+        cmake -S . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DBUILD_TESTS=ON
+    
+    - name: Build
+      run: cmake --build build -j${{ env.CMAKE_BUILD_PARALLEL_LEVEL }}
+    
+    - name: Test executable
+      run: |
+        ./build/bbpctl --version
+        ./build/bbpctl --help
+    
+    - name: Run test suite
+      run: |
+        chmod +x tests/*.sh
+        ./tests/run_all_tests.sh
+    
+    - name: Upload test logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-logs-${{ matrix.os }}-${{ matrix.build_type }}
+        path: tests/logs/
+    
+    - name: Upload binaries
+      if: matrix.build_type == 'Release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: bb-pipeline-${{ matrix.os }}
+        path: |
+          build/bbpctl
+          build/bbp-*
+        retention-days: 30
+
+  # === Security Scanning ===
+  security:
+    name: 🔒 Security Scan
+    needs: code-quality
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: cpp
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build libboost-all-dev libssl-dev \
+          nlohmann-json3-dev libspdlog-dev libgumbo-dev libyaml-cpp-dev libcurl4-openssl-dev
+    
+    - name: Build for analysis
+      run: |
+        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build -j${{ env.CMAKE_BUILD_PARALLEL_LEVEL }}
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  # === Performance Testing ===
+  performance:
+    name: ⚡ Performance Tests
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build libboost-all-dev libssl-dev \
+          nlohmann-json3-dev libspdlog-dev libgumbo-dev libyaml-cpp-dev libcurl4-openssl-dev \
+          valgrind
+    
+    - name: Build optimized
+      run: |
+        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_BENCHMARKS=ON
+        cmake --build build -j${{ env.CMAKE_BUILD_PARALLEL_LEVEL }}
+    
+    - name: Memory leak check
+      run: |
+        valgrind --tool=memcheck --leak-check=full --error-exitcode=1 \
+          ./build/bbpctl --version
+    
+    - name: Performance benchmarks
+      run: |
+        RUN_PERF_TESTS=true ./tests/run_all_tests.sh
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results
+        path: tests/logs/test_report.json
+
+  # === Documentation Generation ===
+  documentation:
+    name: 📚 Documentation
+    needs: code-quality
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Doxygen
+      run: sudo apt-get install -y doxygen graphviz
+    
+    - name: Generate documentation
+      run: |
+        # TODO: Add Doxygen configuration when headers are implemented
+        echo "Documentation generation placeholder"
+    
+    - name: Deploy to GitHub Pages
+      if: success()
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+
+  # === Release Management ===
+  release:
+    name: 🚀 Release
+    needs: [build-test, security, performance]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+        
+        # Package Linux binary
+        tar -czf release-assets/bb-pipeline-linux-x64.tar.gz \
+          -C bb-pipeline-ubuntu-latest bbpctl
+        
+        # Package macOS binary
+        tar -czf release-assets/bb-pipeline-macos-x64.tar.gz \
+          -C bb-pipeline-macos-latest bbpctl
+        
+        # Create checksums
+        cd release-assets
+        sha256sum *.tar.gz > checksums.txt
+    
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          release-assets/*.tar.gz
+          release-assets/checksums.txt
+        body: |
+          ## 🛰️ BB-Pipeline Release ${{ github.ref_name }}
+          
+          ### Downloads
+          - **Linux x64**: `bb-pipeline-linux-x64.tar.gz`
+          - **macOS x64**: `bb-pipeline-macos-x64.tar.gz`
+          
+          ### Installation
+          ```bash
+          tar -xzf bb-pipeline-*.tar.gz
+          chmod +x bbpctl
+          ./bbpctl --help
+          ```
+          
+          ### Checksums
+          Verify downloads with `sha256sum -c checksums.txt`
+
+  # === Dependency Updates ===
+  dependency-review:
+    name: 🔍 Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
+
+  # === Notification ===
+  notify:
+    name: 📢 Notification
+    needs: [build-test, security]
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Notify on failure
+      run: |
+        echo "🚨 CI/CD Pipeline failed on main branch!"
+        echo "Please check the failed jobs and fix issues."
+        # TODO: Add Slack/Discord notification if needed

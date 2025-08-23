@@ -1,0 +1,61 @@
+# BB-Pipeline - CodeQL Security Analysis
+# Advanced security scanning with GitHub CodeQL
+
+name: 🔒 CodeQL Security Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: c-cpp
+          build-mode: manual
+        - language: python
+          build-mode: none
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        queries: +security-and-quality
+
+    - if: matrix.build-mode == 'manual'
+      name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build libboost-all-dev libssl-dev \
+          nlohmann-json3-dev libspdlog-dev libgumbo-dev libyaml-cpp-dev libcurl4-openssl-dev
+
+    - if: matrix.build-mode == 'manual'
+      name: Build C++ code
+      run: |
+        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build -j4
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

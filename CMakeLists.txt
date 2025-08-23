@@ -9,15 +9,51 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Options de build
 option(BUILD_TESTS "Build test suite" OFF)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
+option(ENABLE_SANITIZERS "Enable sanitizers (AddressSanitizer, UBSan)" OFF)
+option(ENABLE_COVERAGE "Enable code coverage" OFF)
 
 # Configuration des flags selon le type de build
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
+# Générer compile_commands.json pour LSP
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Warnings
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
+
+# Sanitizers pour debugging avancé
+if(ENABLE_SANITIZERS)
+    message(STATUS "Enabling sanitizers")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(
+            -fsanitize=address
+            -fsanitize=undefined
+            -fsanitize=leak
+            -fno-omit-frame-pointer
+            -fno-optimize-sibling-calls
+        )
+        add_link_options(
+            -fsanitize=address
+            -fsanitize=undefined
+            -fsanitize=leak
+        )
+    endif()
+endif()
+
+# Coverage pour les tests
+if(ENABLE_COVERAGE)
+    message(STATUS "Enabling code coverage")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(--coverage -fprofile-arcs -ftest-coverage)
+        add_link_options(--coverage)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+        add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+    endif()
 endif()
 
 # Répertoires include
