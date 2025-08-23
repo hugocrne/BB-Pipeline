@@ -1,104 +1,107 @@
-schema_ver,program,domain,notes,allow_subdomains,allow_api,allow_mobile,rate_limit_rps,headers_file,auth_file
-1,"Porsche Bug Bounty","api-frontend.pab.porsche.com","API endpoint",1,1,0,5,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","api.emea.gravity.porsche.com","API endpoint",1,1,0,5,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","api.pab.porsche.com","API endpoint",1,1,0,5,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","api.ppa.porsche.com","API endpoint",1,1,0,5,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","auth.pab.porsche.com","Authentication system",0,1,0,2,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","b2b.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","benefit.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","capitalmarketsday.porsche.com","API endpoint",1,1,0,5,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","christmas-silence.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","cm.staging.pcom.weu.porsche.com","Development/Staging environment",1,1,0,15,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","configurator.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","connect-store.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","dealer.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","drive.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","ecc.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","es.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","experience.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","finder.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","friends.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","identity.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","investorrelations.porsche.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","jobs.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","jobs.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","microsite.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","my.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","myhistory.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","pab.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","paris.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-dortmund.eu","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-duesseldorf.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-erfahren.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-essen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-giessen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-hahn.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-hamburgnordwest.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-kempten.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-koeln.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-moers.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-olympiapark.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-paderborn.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-poster.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-solingen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-stuttgart-flughafen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-stuttgart.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-ulm.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-villingen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-wiesbaden.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-essen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-niederrhein.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-olympiapark.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-paderborn.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-pforzheim.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-reutlingen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-seestern.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-solingen-remscheid.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum-wuppertal.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche-zentrum.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche.biz","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche.digital","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porsche.it","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschediesellookup.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porscheengineering.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porscheenglewood.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschefortcollins.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschegolfusa.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschetravels.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschezentrum-berlin-sued.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschezentrum-berlin.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschezentrum-muenchen-sued.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porschezentrumbremen.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porshe-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","porshedesign.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","press.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","press.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","prod.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","pzk.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","pzm.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","pzms.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","pzsc.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","pzsf.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","shop.porsche.com","E-commerce platform",1,1,1,8,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","signup.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","skyway.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","studio-fa-porsche.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","studio-fa-porsche.net","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","studiofaporsche.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","studiofaporsche.net","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","timepeacesconfigurator.porsche-design.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","ui.pab.porsche.com","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","www-staging.porscheautoinsurance.com","Development/Staging environment",1,1,0,15,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-alttting-wwb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-gppingen-uwb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-gttingen-uwb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-kln-zfb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-lbeck-4ob.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-lneburg-7vb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-mnchen-sd-b3bh.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-nrnberg-7vb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-schwbisch-gmnd-c5b89c.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
-1,"Porsche Bug Bounty","xn--porsche-wrzburg-7vb.de","Main domain",1,1,0,10,"configs/h_headers.txt","configs/h_auth.txt"
+identifier,asset_type,instruction,eligible_for_bounty,eligible_for_submission,availability_requirement,confidentiality_requirement,integrity_requirement,max_severity,system_tags,created_at,updated_at
+api-frontend.pab.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+api.emea.gravity.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+api.pab.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+api.ppa.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+auth.pab.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+b2b.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+benefit.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+capitalmarketsday.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+christmas-silence.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+cm.staging.pcom.weu.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+configurator.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+connect-store.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+dealer.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:28 UTC
+drive.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+ecc.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+es.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+experience.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+finder.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+friends.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+https://apps.apple.com/de/app/my-porsche/id1559529059,APPLE_STORE_APP_ID,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-11-04 15:32:22 UTC
+https://play.google.com/store/apps/details?id=com.porsche.one,GOOGLE_PLAY_APP_ID,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-11-04 15:32:34 UTC
+identity.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+investorrelations.porsche.de,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+jobs.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+jobs.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+microsite.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:14 UTC,2024-10-28 14:38:32 UTC
+my.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:32 UTC
+pab.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+paris.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-dortmund.eu,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-duesseldorf.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-erfahren.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-essen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-giessen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-hahn.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-hamburgnordwest.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-kempten.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-koeln.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-moers.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-olympiapark.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-paderborn.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-poster.com,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-solingen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-stuttgart-flughafen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-stuttgart.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-ulm.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:33 UTC
+porsche-villingen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:34 UTC
+porsche-wiesbaden.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-essen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:15 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-niederrhein.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-olympiapark.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-paderborn.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-pforzheim.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-reutlingen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-seestern.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-solingen-remscheid.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum-wuppertal.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche-zentrum.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche.biz,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche.de,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche.digital,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porsche.it,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porschediesellookup.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porscheengineering.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porscheenglewood.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porschefortcollins.com,URL,,false,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-11-21 09:53:57 UTC
+porschegolfusa.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porschetravels.com,URL,,true,true,,,,critical,,2024-10-10 15:07:16 UTC,2024-10-28 14:38:34 UTC
+porschezentrum-berlin-sued.de,URL,,true,true,,,,critical,,2024-10-10 15:07:20 UTC,2024-10-28 14:38:35 UTC
+porschezentrum-berlin.de,URL,,true,true,,,,critical,,2024-10-10 15:07:20 UTC,2024-10-28 14:38:35 UTC
+porschezentrum-muenchen-sued.de,URL,,true,true,,,,critical,,2024-10-10 15:07:20 UTC,2024-10-28 14:38:35 UTC
+porschezentrumbremen.de,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+porshe-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+porshedesign.com,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+press.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+press.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+prod.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+pzk.de,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+pzm.de,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+pzms.de,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+pzsc.de,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+pzsf.de,URL,,true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-10-28 14:38:51 UTC
+shop.porsche.com,URL,"",true,true,,,,critical,,2024-10-10 15:07:38 UTC,2024-11-04 12:46:22 UTC
+signup.porsche.com,URL,"",true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-11-04 12:46:22 UTC
+skyway.porsche.com,URL,"",true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-11-04 12:46:22 UTC
+studio-fa-porsche.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+studio-fa-porsche.net,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+studiofaporsche.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+studiofaporsche.net,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+timepeacesconfigurator.porsche-design.com,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+ui.pab.porsche.com,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+www-staging.porscheautoinsurance.com,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-alttting-wwb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-gppingen-uwb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-gttingen-uwb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-kln-zfb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-lbeck-4ob.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-lneburg-7vb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-mnchen-sd-b3bh.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-nrnberg-7vb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-schwbisch-gmnd-c5b89c.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+xn--porsche-wrzburg-7vb.de,URL,,true,true,,,,critical,,2024-10-10 15:07:39 UTC,2024-10-28 14:38:52 UTC
+myhistory.porsche.com,URL,"",true,true,high,high,high,critical,,2025-07-29 09:37:28 UTC,2025-07-29 09:37:28 UTC
+checkout.porsche.com,URL,"",true,true,,,,critical,,2025-07-29 09:37:57 UTC,2025-07-29 09:37:57 UTC

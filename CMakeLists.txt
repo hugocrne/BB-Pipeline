@@ -1,76 +1,61 @@
 cmake_minimum_required(VERSION 3.20)
 project(bb-pipeline VERSION 1.0.0 LANGUAGES CXX)
 
-# Configuration C++
+# --- C++ config
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Options de build
+# --- Options
 option(BUILD_TESTS "Build test suite" OFF)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
-option(ENABLE_SANITIZERS "Enable sanitizers (AddressSanitizer, UBSan)" OFF)
+option(ENABLE_SANITIZERS "Enable sanitizers (ASan/UBSan/LSan)" OFF)
 option(ENABLE_COVERAGE "Enable code coverage" OFF)
 
-# Configuration des flags selon le type de build
+# --- Build types flags
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
-# Générer compile_commands.json pour LSP
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Warnings
+# --- Warnings
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# Sanitizers pour debugging avancé
+# --- Sanitizers (désactivés par défaut)
 if(ENABLE_SANITIZERS)
-    message(STATUS "Enabling sanitizers")
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        add_compile_options(
-            -fsanitize=address
-            -fsanitize=undefined
-            -fsanitize=leak
-            -fno-omit-frame-pointer
-            -fno-optimize-sibling-calls
-        )
-        add_link_options(
-            -fsanitize=address
-            -fsanitize=undefined
-            -fsanitize=leak
-        )
-    endif()
+  message(STATUS "Enabling sanitizers")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+    # LSan n'est pas toujours dispo sur AppleClang; on reste minimal côté link:
+    add_link_options(-fsanitize=address -fsanitize=undefined)
+  endif()
 endif()
 
-# Coverage pour les tests
+# --- Coverage
 if(ENABLE_COVERAGE)
-    message(STATUS "Enabling code coverage")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        add_compile_options(--coverage -fprofile-arcs -ftest-coverage)
-        add_link_options(--coverage)
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
-        add_link_options(-fprofile-instr-generate -fcoverage-mapping)
-    endif()
+  message(STATUS "Enabling code coverage")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(--coverage -fprofile-arcs -ftest-coverage)
+    add_link_options(--coverage)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+    add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+  endif()
 endif()
 
-# Répertoires include
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-# Recherche des dépendances
+# --- Dépendances
 find_package(PkgConfig REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
 
-# Dépendances optionnelles pour démarrer (seront activées progressivement)
-# Pour l'instant, on compile juste avec les dépendances de base
+# --- Include public global (tu pourras migrer module par module plus tard)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Création des répertoires
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/bbp)
+# --- Ne plus créer/forcer des dossiers src/* (tu gères l'arbo)
+# (On garde uniquement les dossiers de données/outils)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/out)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/configs)
@@ -79,80 +64,74 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/schemas)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-# Bibliothèque core partagée
-add_library(bbp-core STATIC
-    src/core/config.cpp
-    src/core/csv.cpp
-    src/core/logger.cpp
-    src/core/rate_limit.cpp
-    src/core/scope.cpp
-    src/core/http.cpp
-    src/core/tls.cpp
-    src/core/cache.cpp
-    src/core/fingerprints.cpp
-    src/core/soft404.cpp
-    src/core/util.cpp
+# --- Target "core" INTERFACE (pas de .cpp requis) : centralise deps/includes
+add_library(bbp-core INTERFACE)
+target_link_libraries(bbp-core INTERFACE
+  OpenSSL::SSL
+  OpenSSL::Crypto
+  CURL::libcurl
+  Threads::Threads
 )
+target_include_directories(bbp-core INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Linking des dépendances de base
-target_link_libraries(bbp-core
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    ${CURL_LIBRARIES}
-    Threads::Threads
-)
+# --- Orchestrateur: binaire unique à partir de src/main.cpp
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+  add_executable(bbpctl
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/types/scope.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/types/scopeEntry.cpp
+  )
+  target_link_libraries(bbpctl PRIVATE bbp-core)
+endif()
 
-# Include directories
-target_include_directories(bbp-core PRIVATE 
-    ${CURL_INCLUDE_DIRS}
-)
-
-# Binaires des modules
+# --- Modules optionnels : créés seulement si src/<module>/main.cpp existe
 set(MODULES
-    subhunter
-    httpxpp
-    headless
-    dirbff
-    jsintel
-    apiparser
-    apitester
-    mobile
-    changes
-    aggregator
+  subhunter
+  httpxpp
+  headless
+  dirbff
+  jsintel
+  apiparser
+  apitester
+  mobile
+  changes
+  aggregator
 )
 
 foreach(MODULE ${MODULES})
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/${MODULE}/main.cpp)
-        add_executable(bbp-${MODULE}
-            src/${MODULE}/main.cpp
-            src/${MODULE}/${MODULE}.cpp
-        )
-        target_link_libraries(bbp-${MODULE} bbp-core)
-    endif()
+  set(SRCS)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/${MODULE}/main.cpp)
+    list(APPEND SRCS src/${MODULE}/main.cpp)
+  endif()
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/${MODULE}/${MODULE}.cpp)
+    list(APPEND SRCS src/${MODULE}/${MODULE}.cpp)
+  endif()
+  if(SRCS)
+    add_executable(bbp-${MODULE} ${SRCS})
+    target_link_libraries(bbp-${MODULE} PRIVATE bbp-core)
+  endif()
 endforeach()
 
-# Orchestrateur bbpctl
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/bbpctl/main.cpp)
-    add_executable(bbpctl src/bbpctl/main.cpp)
-    target_link_libraries(bbpctl bbp-core)
-endif()
-
-# Tests
+# --- Tests (optionnels)
 if(BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
+  enable_testing()
+  add_subdirectory(tests)
 endif()
 
-# Installation
-install(TARGETS bbpctl DESTINATION bin)
+# --- Installation
+if(TARGET bbpctl)
+  install(TARGETS bbpctl DESTINATION bin)
+endif()
 foreach(MODULE ${MODULES})
-    if(TARGET bbp-${MODULE})
-        install(TARGETS bbp-${MODULE} DESTINATION bin)
-    endif()
+  if(TARGET bbp-${MODULE})
+    install(TARGETS bbp-${MODULE} DESTINATION bin)
+  endif()
 endforeach()
 
-install(DIRECTORY configs/ DESTINATION share/bb-pipeline/configs)
+install(DIRECTORY configs/   DESTINATION share/bb-pipeline/configs)
 install(DIRECTORY wordlists/ DESTINATION share/bb-pipeline/wordlists)
-install(DIRECTORY schemas/ DESTINATION share/bb-pipeline/schemas)
-install(DIRECTORY scripts/ DESTINATION share/bb-pipeline/scripts
-        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+install(DIRECTORY schemas/   DESTINATION share/bb-pipeline/schemas)
+install(DIRECTORY scripts/   DESTINATION share/bb-pipeline/scripts
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                         GROUP_READ GROUP_EXECUTE
+                         WORLD_READ WORLD_EXECUTE)
