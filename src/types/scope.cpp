@@ -1,15 +1,30 @@
 // EN: Implementation of the Scope class. Handles loading scope entries from a CSV file and printing
-// them. FR : Implémentation de la classe Scope. Gère le chargement des entrées de scope depuis un fichier CSV et leur affichage.
+// them. FR : Implémentation de la classe Scope. Gère le chargement des entrées de scope depuis un
+// fichier CSV et leur affichage.
 
 #include "../include/types/scope.hpp"
 
+#include <cctype>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
 #include "../include/types/scopeEntry.hpp"
+
+// EN: Utility function to parse a CSV field into int, double, or string for std::variant.
+// FR : Fonction utilitaire pour parser un champ CSV en int, double ou string pour std::variant.
+static std::variant<int, double, std::string> parseVariant(const std::string& value) {
+    if (value.empty()) return std::string("");
+    char* endptr = nullptr;
+    long int_val = strtol(value.c_str(), &endptr, 10);
+    if (*endptr == '\0') return static_cast<int>(int_val);
+    double double_val = strtod(value.c_str(), &endptr);
+    if (*endptr == '\0') return double_val;
+    return value;
+}
 
 namespace Scope {
 
@@ -18,14 +33,14 @@ namespace Scope {
 Scope::Scope(std::string fileName) {
     std::ifstream file(fileName);
     if (!file.is_open()) {
+        std::cerr << "[ERROR] Could not open file: " << fileName << std::endl;
         throw std::runtime_error("Could not open file");
     }
     std::string line;
-
-    // EN: Skip the header line.
-    // FR : Ignore la ligne d'en-tête.
-    std::getline(file, line);
+    int line_num = 0;
+    std::getline(file, line);  // Skip header
     while (std::getline(file, line)) {
+        line_num++;
         std::vector<std::string> fields;
         std::stringstream ss(line);
         std::string field;
@@ -34,34 +49,26 @@ Scope::Scope(std::string fileName) {
         while (std::getline(ss, field, ',')) {
             fields.push_back(field);
         }
-
-        // EN: Only process lines with 12 fields.
-        // FR : Ne traite que les lignes avec 12 champs.
-        if (fields.size() != 12) continue;
-
-        // EN: Replace empty fields with empty strings.
-        // FR : Remplace les champs vides par des chaînes vides.
+        if (fields.size() != 12) {
+            std::cerr << "[WARNING] Line " << line_num << " malformed (" << fields.size()
+                      << " fields): " << line << std::endl;
+            continue;
+        }
         for (auto& f : fields) {
             if (f.empty()) f = "";
         }
-
-        // EN: Convert boolean fields.
-        // FR : Convertit les champs booléens.
         bool eligible_for_bounty = (fields[3] == "true" || fields[3] == "1");
         bool eligible_for_submission = (fields[4] == "true" || fields[4] == "1");
-
-        // EN: Create a ScopeEntry and add it to the vector.
-        // FR : Crée un ScopeEntry et l'ajoute au vecteur.
         ScopeEntry::ScopeEntry entry(fields[0],
                                      fields[1],
-                                     fields[2],
+                                     parseVariant(fields[2]),
                                      eligible_for_bounty,
                                      eligible_for_submission,
-                                     fields[5],
-                                     fields[6],
+                                     parseVariant(fields[5]),
+                                     parseVariant(fields[6]),
                                      fields[7],
                                      fields[8],
-                                     fields[9],
+                                     parseVariant(fields[9]),
                                      fields[10],
                                      fields[11]);
         entries.push_back(entry);

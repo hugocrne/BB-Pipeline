@@ -1,5 +1,6 @@
 // EN: Declaration of the ScopeEntry class. Represents a single entry in the scope with all its
-// fields. FR : Déclaration de la classe ScopeEntry. Représente une entrée unique du scope avec tous ses champs.
+// fields. FR : Déclaration de la classe ScopeEntry. Représente une entrée unique du scope avec tous
+// ses champs.
 
 #pragma once
 

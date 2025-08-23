@@ -1,14 +1,18 @@
 // EN: Declaration of the Scope class. Represents a collection of scope entries loaded from a CSV
-// file. FR : Déclaration de la classe Scope. Représente une collection d'entrées de scope chargées depuis un fichier CSV.
+// file. FR : Déclaration de la classe Scope. Représente une collection d'entrées de scope chargées
+// depuis un fichier CSV.
 
 #pragma once
 
 #include <list>
 #include <ostream>
 #include <string>
+#include <variant>
 #include <vector>
 
-#include "./scopeEntry.hpp"
+namespace ScopeEntry {
+class ScopeEntry;
+}
 
 namespace Scope {
 
