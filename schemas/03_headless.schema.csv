@@ -1,0 +1,1 @@
+schema_ver,program,base_url,discovered_url,url_type,method,headers,form_data,spa_route,xhr_endpoint,fetch_endpoint,websocket_endpoint,service_worker_url,manifest_url,dom_element,element_attributes,javascript_function,javascript_variable,local_storage_key,session_storage_key,cookie_name,error_message,load_time_ms,screenshot_path,timestamp

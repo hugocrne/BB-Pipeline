@@ -1,0 +1,43 @@
+# Build directories
+build/
+cmake-build-*/
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Compiled binaries
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# Output files
+out/*.csv
+!out/.gitkeep
+
+# Cache and temporary files
+*.tmp
+*.cache
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Generated files
+compile_commands.json
+
+# Personal configs (keep templates)
+configs/*_personal.*
+data/scope_personal.csv

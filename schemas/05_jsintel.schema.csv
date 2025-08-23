@@ -1,0 +1,1 @@
+schema_ver,program,source_url,js_file_path,endpoint_url,endpoint_method,endpoint_parameters,api_key_found,secret_found,token_found,hardcoded_credential,internal_domain,internal_ip,debug_info,source_map_url,function_name,variable_name,comment_text,regex_pattern_matched,secret_type,confidence_score,line_number,context,obfuscated,deobfuscated_content,timestamp

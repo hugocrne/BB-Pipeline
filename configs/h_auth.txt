@@ -1,0 +1,56 @@
+# BB-Pipeline - Templates d'authentification
+# Format: Type:Template (un par ligne)
+# Variables supportées: {domain}, {subdomain}, {program}
+
+# Bearer tokens communs
+Bearer:Bearer token
+Bearer:Bearer {program}_api_key
+Bearer:Bearer {domain}_token
+Bearer:Bearer test_token_123
+
+# API Keys
+APIKey:X-API-Key: {program}_key
+APIKey:X-API-Key: test_key_123
+APIKey:X-API-Key: dev_key
+APIKey:X-API-Key: staging_key
+APIKey:api_key={domain}_key
+APIKey:key=test123
+APIKey:token=demo_token
+
+# Basic Auth (base64 encodé)
+Basic:Authorization: Basic YWRtaW46YWRtaW4=
+Basic:Authorization: Basic dGVzdDp0ZXN0
+Basic:Authorization: Basic YWRtaW46cGFzc3dvcmQ=
+Basic:Authorization: Basic Z3Vlc3Q6Z3Vlc3Q=
+Basic:Authorization: Basic ZGVtbzpkZW1v
+
+# Cookies de session
+Cookie:Cookie: session_id=test123
+Cookie:Cookie: auth_token={program}_token  
+Cookie:Cookie: PHPSESSID=test_session_123
+Cookie:Cookie: JSESSIONID=test_java_session
+Cookie:Cookie: laravel_session=test_laravel
+Cookie:Cookie: admin_session=admin_test
+Cookie:Cookie: user_token=demo_user_123
+
+# JWT tokens (exemples avec payload minimal)
+JWT:Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoidGVzdCIsInJvbGUiOiJhZG1pbiJ9.test
+JWT:X-Auth-Token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiZGVtbyJ9.demo
+
+# Headers custom pour APIs
+Custom:X-User-ID: 1
+Custom:X-Role: admin
+Custom:X-Client-ID: {program}_client
+Custom:X-Access-Token: test_access_123
+
+# OAuth-like
+OAuth:Authorization: OAuth token=test_oauth_token
+OAuth:X-OAuth-Token: {domain}_oauth
+
+# Digest auth (exemple)
+Digest:Authorization: Digest username="test", realm="{domain}", nonce="test123"
+
+# Custom auth schemes
+Custom:X-Custom-Auth: {program}_custom_auth
+Custom:X-Service-Token: service_{domain}_token
+Custom:X-Internal-Key: internal_key_123

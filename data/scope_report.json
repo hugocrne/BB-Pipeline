@@ -1,0 +1,15 @@
+{
+  "conversion_timestamp": "2025-08-23T14:26:14+02:00",
+  "source_file": "data/scope.example.csv",
+  "output_file": "data/scope.csv",
+  "program_name": "Porsche Bug Bounty",
+  "format_detected": "hackerone",
+  "total_domains":      103,
+  "api_enabled_domains": 103,
+  "mobile_enabled_domains":        1,
+  "rate_limiting_stats": {
+    "conservative_2rps":        1,
+    "normal_10rps":       94,
+    "aggressive_15rps":        2
+  }
+}

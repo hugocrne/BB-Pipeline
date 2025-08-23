@@ -1,0 +1,165 @@
+# BB-Pipeline - Configuration par défaut
+# Timeouts, threads, RPS global, User-Agent, cache, soft-404
+
+# Configuration générale
+pipeline:
+  max_threads: 200
+  default_timeout: 30
+  resume_enabled: true
+  kill_switch_enabled: true
+
+# Rate limiting global  
+rate_limit:
+  default_rps: 10
+  max_rps: 100
+  burst_size: 20
+  backoff_factor: 1.5
+
+# Configuration HTTP
+http:
+  user_agent: "BB-Pipeline/1.0.0 (https://github.com/bb-pipeline/bb-pipeline)"
+  timeout: 30
+  connect_timeout: 10
+  max_redirects: 3
+  verify_ssl: true
+  headers:
+    - "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    - "Accept-Language: en-US,en;q=0.5"
+    - "Accept-Encoding: gzip, deflate"
+    - "DNT: 1"
+    - "Connection: keep-alive"
+
+# Configuration DNS
+dns:
+  timeout: 5
+  retries: 3
+  servers:
+    - "8.8.8.8"
+    - "1.1.1.1"
+    - "9.9.9.9"
+
+# Configuration cache
+cache:
+  enabled: true
+  ttl: 3600  # 1h
+  max_size_mb: 100
+  directory: ".cache"
+  use_etag: true
+  use_last_modified: true
+
+# Détection soft-404
+soft404:
+  enabled: true
+  min_content_length: 100
+  max_similarity_ratio: 0.8
+  common_404_patterns:
+    - "404"
+    - "not found"
+    - "page not found"
+    - "file not found"
+    - "does not exist"
+    - "error 404"
+  common_404_titles:
+    - "404"
+    - "Not Found"
+    - "Page Not Found"
+    - "Error"
+
+# Configuration TLS
+tls:
+  timeout: 10
+  verify_certificates: false  # Pour éviter les erreurs sur les certs auto-signés
+  extract_san: true
+  extract_issuer: true
+  extract_subject: true
+
+# Configuration logging
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "ndjson"  # ndjson, text
+  output: "stdout"  # stdout, stderr, file
+  file: "bb-pipeline.log"
+  correlation_id: true
+  max_file_size_mb: 50
+  max_files: 5
+
+# Configuration des modules
+modules:
+  subhunter:
+    timeout: 300
+    max_subdomains: 10000
+    dns_bruteforce: true
+    certificate_transparency: true
+    
+  httpxpp:
+    timeout: 30
+    follow_redirects: true
+    extract_title: true
+    extract_server: true
+    detect_technologies: true
+    screenshot: false
+    
+  headless:
+    timeout: 60
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    viewport_width: 1920
+    viewport_height: 1080
+    javascript_enabled: true
+    load_timeout: 30
+    
+  dirbff:
+    timeout: 30
+    max_depth: 3
+    follow_redirects: false
+    detect_soft404: true
+    extensions_bruteforce: true
+    
+  jsintel:
+    timeout: 60
+    parse_source_maps: true
+    extract_api_endpoints: true
+    extract_secrets: true
+    deobfuscate: false
+    
+  apiparser:
+    timeout: 30
+    parse_openapi: true
+    parse_swagger: true
+    graphql_introspection: true
+    
+  apitester:
+    timeout: 30
+    test_idor: true
+    test_rate_limit: false  # Safe by default
+    test_verb_tampering: true
+    max_test_depth: 2
+    
+  mobile:
+    timeout: 300
+    decompile_apk: true
+    extract_urls: true
+    extract_secrets: true
+    static_analysis_only: true
+    
+  changes:
+    timeout: 30
+    check_title: true
+    check_headers: true
+    check_certificates: true
+    check_favicon: true
+    check_content_hash: true
+    
+  aggregator:
+    timeout: 60
+    enable_scoring: true
+    confidence_threshold: 0.7
+    max_results: 1000
+
+# Configuration scoring (référence vers scoring.yaml)
+scoring:
+  config_file: "configs/scoring.yaml"
+  enabled: true
+  algorithms:
+    - "weighted_sum"
+    - "confidence_boost"
+    - "risk_amplification"

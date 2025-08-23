@@ -1,0 +1,197 @@
+# BB-Pipeline - Configuration du système de scoring
+# Pondérations des signaux + seuils de confiance
+
+# Configuration générale du scoring
+general:
+  max_score: 100.0
+  min_confidence: 0.1
+  default_score: 1.0
+  score_precision: 2
+
+# Pondérations par type de signal
+signal_weights:
+  # Signaux DNS/Infrastructure  
+  subdomain_discovery: 2.0
+  dns_wildcard: -1.0  # Négatif car moins intéressant
+  certificate_transparency: 3.0
+  certificate_expired: 1.5
+  certificate_self_signed: 2.0
+  
+  # Signaux HTTP
+  http_alive: 5.0
+  http_redirect: 1.0
+  http_error_4xx: 0.5
+  http_error_5xx: 2.0
+  http_uncommon_port: 3.0
+  http_dev_headers: 4.0
+  
+  # Technologies détectées
+  tech_admin_panel: 8.0
+  tech_database: 6.0
+  tech_framework: 3.0
+  tech_cms: 4.0
+  tech_dev_tools: 7.0
+  tech_monitoring: 3.0
+  
+  # WAF/CDN Detection
+  waf_detected: -2.0  # Plus difficile à tester
+  cdn_detected: 1.0
+  cloudflare_detected: 0.5
+  
+  # Directory Discovery
+  dir_admin_found: 9.0
+  dir_backup_found: 8.0
+  dir_config_found: 7.0
+  dir_logs_found: 6.0
+  dir_test_found: 5.0
+  dir_dev_found: 6.0
+  dir_api_found: 7.0
+  dir_upload_found: 5.0
+  
+  # File Discovery  
+  file_config: 8.0
+  file_backup: 7.0
+  file_source_code: 6.0
+  file_database: 9.0
+  file_log: 4.0
+  file_documentation: 3.0
+  
+  # JavaScript Intelligence
+  js_api_endpoint: 6.0
+  js_secret_key: 9.0
+  js_hardcoded_token: 8.0
+  js_internal_domain: 5.0
+  js_debug_info: 4.0
+  js_source_map: 3.0
+  
+  # API Discovery
+  api_openapi_spec: 7.0
+  api_swagger_ui: 6.0
+  api_graphql_endpoint: 7.0
+  api_graphql_introspection: 8.0
+  api_rest_endpoint: 5.0
+  api_authentication_bypass: 9.0
+  
+  # API Testing Results
+  api_idor_potential: 9.0
+  api_rate_limit_bypass: 7.0
+  api_verb_tampering: 6.0
+  api_parameter_pollution: 5.0
+  api_mass_assignment: 8.0
+  
+  # Mobile Intelligence
+  mobile_hardcoded_url: 6.0
+  mobile_api_key: 8.0
+  mobile_debug_mode: 5.0
+  mobile_backup_enabled: 4.0
+  
+  # Change Detection
+  change_title: 2.0
+  change_certificate: 4.0
+  change_technology: 3.0
+  change_new_subdomain: 5.0
+  change_new_endpoint: 6.0
+  
+  # Content Analysis
+  content_sensitive_info: 7.0
+  content_error_disclosure: 5.0
+  content_debug_info: 4.0
+  content_internal_ip: 6.0
+
+# Multiplicateurs de confiance par contexte
+confidence_multipliers:
+  # Port contexts
+  port_80: 1.0
+  port_443: 1.0
+  port_8080: 1.2
+  port_8443: 1.2
+  port_3000: 1.3  # Dev ports
+  port_8000: 1.3
+  port_9000: 1.3
+  port_admin: 1.5  # Ports d'admin
+  
+  # Subdomain contexts
+  subdomain_www: 1.0
+  subdomain_api: 1.3
+  subdomain_admin: 1.5
+  subdomain_dev: 1.4
+  subdomain_test: 1.3
+  subdomain_staging: 1.4
+  subdomain_internal: 1.6
+  
+  # Path contexts
+  path_root: 1.0
+  path_admin: 1.5
+  path_api: 1.3
+  path_dev: 1.4
+  path_backup: 1.4
+  path_config: 1.4
+
+# Seuils de classification par score
+classification_thresholds:
+  critical: 80.0    # Score >= 80: Critique
+  high: 60.0        # Score >= 60: Élevé  
+  medium: 40.0      # Score >= 40: Moyen
+  low: 20.0         # Score >= 20: Faible
+  info: 0.0         # Score >= 0: Information
+
+# Algorithmes de scoring
+algorithms:
+  weighted_sum:
+    enabled: true
+    description: "Somme pondérée des signaux"
+    
+  confidence_boost:
+    enabled: true
+    description: "Amplification basée sur la confiance"
+    boost_factor: 1.2
+    min_confidence: 0.7
+    
+  risk_amplification:
+    enabled: true
+    description: "Amplification des signaux à haut risque"
+    risk_threshold: 70.0
+    amplification_factor: 1.3
+    
+  context_awareness:
+    enabled: true
+    description: "Ajustement selon le contexte (subdomains, ports)"
+    
+  temporal_decay:
+    enabled: false
+    description: "Décroissance temporelle des signaux"
+    decay_factor: 0.95
+    decay_period_hours: 24
+
+# Patterns de scoring spéciaux
+special_patterns:
+  # Combinaisons qui boostent le score
+  combination_bonuses:
+    admin_panel_with_weak_auth: 15.0
+    api_with_no_auth: 12.0
+    backup_with_sensitive_data: 10.0
+    dev_env_in_production: 8.0
+    
+  # Patterns qui diminuent le score
+  false_positive_penalties:
+    honeypot_detected: -20.0
+    waf_blocking_everything: -10.0
+    rate_limited_heavily: -5.0
+
+# Configuration avancée
+advanced:
+  # Score normalization
+  normalize_scores: true
+  normalization_method: "min_max"  # min_max, z_score
+  
+  # Outlier detection
+  outlier_detection: true
+  outlier_threshold: 3.0
+  
+  # Machine learning hints (pour futures versions)
+  ml_features_extraction: false
+  feature_importance_weights: {}
+  
+  # Export configuration
+  export_intermediate_scores: false
+  export_signal_breakdown: true

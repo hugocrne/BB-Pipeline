@@ -1,0 +1,1 @@
+schema_ver,program,subdomain,domain,ip_address,dns_type,cname_target,mx_priority,txt_records,certificate_issuer,certificate_subject,certificate_san,certificate_valid_from,certificate_valid_to,certificate_fingerprint,wildcard_detected,source,discovery_method,timestamp

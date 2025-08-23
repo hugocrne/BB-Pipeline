@@ -1,0 +1,1 @@
+schema_ver,program,host,url,scheme,port,status_code,content_type,content_length,response_time_ms,title,server_header,x_powered_by,location_header,set_cookie_headers,security_headers,cdn_provider,waf_detected,waf_type,robots_txt_length,favicon_hash,favicon_url,screenshot_path,technologies_detected,error_message,redirect_chain,final_url,timestamp

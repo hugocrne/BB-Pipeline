@@ -1,0 +1,39 @@
+# BB-Pipeline - Headers HTTP custom
+# Un header par ligne, format: "Header-Name: Value"
+# Utilisé pour personnaliser les requêtes HTTP par programme
+
+# Headers de base pour éviter la détection
+X-Forwarded-For: 127.0.0.1
+X-Real-IP: 127.0.0.1
+X-Originating-IP: 127.0.0.1
+
+# Headers pour bypasser certaines protections
+X-Cluster-Client-IP: 127.0.0.1
+X-Remote-IP: 127.0.0.1
+X-Remote-Addr: 127.0.0.1
+
+# Headers d'authentification simulée (pour contourner IP whitelist)
+X-Client-IP: 127.0.0.1
+Client-IP: 127.0.0.1
+
+# Headers pour simuler des requêtes internes
+X-Rewrite-URL: /
+X-Original-URL: /
+X-Override-URL: /
+
+# Headers pour API testing
+Content-Type: application/json
+Accept: application/json, text/plain, */*
+
+# Headers pour simuler différents clients
+X-Requested-With: XMLHttpRequest
+Referer: https://www.google.com/
+
+# Headers pour cloud/proxy bypass
+CF-Connecting-IP: 127.0.0.1
+X-Cloudflare-IP: 127.0.0.1
+True-Client-IP: 127.0.0.1
+
+# Headers pour load balancer bypass  
+X-Forwarded-Proto: https
+X-Forwarded-Host: localhost
