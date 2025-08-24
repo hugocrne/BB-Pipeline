@@ -28,7 +28,7 @@
 
 ### Arborescence du projet
 
-```
+``` sh
 bb-pipeline/
 ├─ CMakeLists.txt
 ├─ README.md
@@ -203,7 +203,7 @@ Chaque CSV est **versionné** (`schema_ver`), et documenté dans `/schemas/`.
 
 Exemple — `schemas/02_probe.schema.csv` :
 
-```
+``` csv
 schema_ver,program,host,url,scheme,status,content_type,content_length,title,server,cdn,waf_hint,robots_len,favicon_hash,len_bucket,signature,score_hint
 ```
 
@@ -269,7 +269,7 @@ Options utiles :
 
 Dans `data/scope.csv` :
 
-```
+``` csv
 schema_ver,program,domain,notes,allow_subdomains,allow_api,allow_mobile,rate_limit_rps,headers_file,auth_file
 1,Demo,example.com,main,1,1,1,2,configs/h_headers.txt,configs/h_auth.txt
 ```
