@@ -7,13 +7,8 @@
 #include "./include/types/scope.hpp"
 
 int main() {
-    // EN: Create a Scope object from the CSV file.
-    // FR : Crée un objet Scope à partir du fichier CSV.
-    Scope::Scope scope("data/scope.csv");
 
-    // EN: Print the entire scope to the console.
-    // FR : Affiche tout le scope dans la console.
-    // std::cout << "Scope: " << scope << std::endl;
+    std::cout << "Hello, World!" << std::endl;
 
     return 0;
 }
