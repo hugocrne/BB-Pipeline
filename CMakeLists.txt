@@ -50,7 +50,7 @@ find_package(PkgConfig REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
-find_package(PkgConfig REQUIRED)
+find_package(ZLIB REQUIRED)
 pkg_check_modules(YAMLCPP REQUIRED yaml-cpp)
 
 # --- Include public global (tu pourras migrer module par module plus tard)
@@ -66,17 +66,20 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/schemas)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-# --- Core library avec Logger System, Rate Limiter et Configuration Manager
+# --- Core library avec Logger System, Rate Limiter, Configuration Manager, Cache System et Thread Pool
 add_library(bbp-core
   src/core/logger.cpp
   src/core/rate_limiter.cpp
   src/core/config_manager.cpp
+  src/core/cache_system.cpp
+  src/core/thread_pool.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL
   OpenSSL::Crypto
   CURL::libcurl
   Threads::Threads
+  ZLIB::ZLIB
   ${YAMLCPP_LIBRARIES}
 )
 target_link_directories(bbp-core PUBLIC ${YAMLCPP_LIBRARY_DIRS})
