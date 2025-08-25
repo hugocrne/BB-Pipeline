@@ -73,6 +73,8 @@ add_library(bbp-core
   src/infrastructure/networking/cache_system.cpp
   src/infrastructure/threading/thread_pool.cpp
   src/infrastructure/config/config_manager.cpp
+  src/infrastructure/system/signal_handler.cpp
+  src/infrastructure/system/memory_manager.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL

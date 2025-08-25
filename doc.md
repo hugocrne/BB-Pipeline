@@ -318,6 +318,290 @@ auto stats = pool.getStats();
 
 ---
 
+### 6. 🛡️ Gestionnaire de Signaux (Signal Handler)
+
+#### Fonctionnalité
+Système de gestion des signaux système (SIGINT/SIGTERM) avec arrêt propre garanti et flush automatique des données CSV pour éviter la perte de données lors d'interruptions.
+
+#### Caractéristiques Techniques
+- **Signaux Gérés** : SIGINT (Ctrl+C), SIGTERM (kill)
+- **Arrêt Propre** : Exécution ordonnée des callbacks de nettoyage
+- **Flush CSV Garanti** : Sauvegarde prioritaire des données CSV
+- **Timeout Protection** : Délais configurables avec flush d'urgence
+- **Thread-Safety** : Gestion thread-safe des callbacks multiples
+- **Statistiques** : Monitoring des arrêts et performances
+- **Emergency Mode** : Flush d'urgence en cas de timeout
+
+#### Configuration
+```cpp
+BBP::SignalHandlerConfig config;
+config.shutdown_timeout = std::chrono::milliseconds(5000);     // 5 secondes
+config.csv_flush_timeout = std::chrono::milliseconds(2000);    // 2 secondes  
+config.enable_emergency_flush = true;                          // Flush d'urgence activé
+config.log_signal_details = true;                              // Log détaillé des signaux
+
+auto& handler = BBP::SignalHandler::getInstance();
+handler.configure(config);
+handler.initialize();
+```
+
+#### Utilisation
+```cpp
+#include "infrastructure/system/signal_handler.hpp"
+
+auto& handler = BBP::SignalHandler::getInstance();
+
+// Enregistrement callback nettoyage général
+handler.registerCleanupCallback("thread_pool_cleanup", []() {
+    ThreadPool::getInstance().shutdown();
+    Logger::getInstance().info("cleanup", "Thread pool fermé proprement");
+});
+
+// Enregistrement callback flush CSV (prioritaire)
+handler.registerCsvFlushCallback("/out/01_subdomains.csv", [](const std::string& path) {
+    CsvWriter writer(path);
+    writer.flushPendingData();
+    writer.close();
+    Logger::getInstance().info("csv_flush", "CSV sauvegardé: " + path);
+});
+
+// Initialisation (enregistre SIGINT/SIGTERM)
+handler.initialize();
+
+// Le processus principal continue...
+while (!handler.isShutdownRequested()) {
+    // Travail principal
+    doWork();
+    
+    if (handler.isShuttingDown()) {
+        Logger::getInstance().info("main", "Arrêt en cours...");
+        break;
+    }
+}
+
+// Attendre la fin complète de l'arrêt
+handler.waitForShutdown();
+```
+
+#### Callbacks et Priorité
+```cpp
+// 1. Les callbacks CSV sont exécutés EN PREMIER (données critiques)
+handler.registerCsvFlushCallback("/out/findings.csv", [](const std::string& path) {
+    // Sauvegarde critique des résultats
+});
+
+// 2. Puis les callbacks de nettoyage général
+handler.registerCleanupCallback("database_connection", []() {
+    database.disconnect();
+});
+
+handler.registerCleanupCallback("temp_files", []() {
+    filesystem::remove_all("/tmp/bbp_temp");
+});
+```
+
+#### Gestion des Timeouts et Urgence
+```cpp
+// Configuration avec timeouts stricts
+BBP::SignalHandlerConfig config;
+config.csv_flush_timeout = 1000ms;        // 1 seconde max pour CSV
+config.shutdown_timeout = 3000ms;         // 3 secondes total
+config.enable_emergency_flush = true;     // Mode urgence si timeout
+
+handler.configure(config);
+
+// En cas de timeout:
+// 1. Les callbacks CSV lents sont interrompus
+// 2. Emergency flush automatique activé  
+// 3. Sauvegarde minimale garantie
+```
+
+#### Statistiques et Monitoring
+```cpp
+auto stats = handler.getStats();
+
+std::cout << "Signaux reçus: " << stats.signals_received << std::endl;
+std::cout << "Arrêts réussis: " << stats.successful_shutdowns << std::endl;
+std::cout << "Timeouts: " << stats.timeout_shutdowns << std::endl;
+std::cout << "Durée dernier arrêt: " << stats.last_shutdown_duration.count() << "ms" << std::endl;
+std::cout << "Temps total flush CSV: " << stats.total_csv_flush_time.count() << "ms" << std::endl;
+
+// Statistiques par signal
+for (const auto& [signal, count] : stats.signal_counts) {
+    std::cout << "Signal " << signal << ": " << count << " fois" << std::endl;
+}
+```
+
+#### Cas d'Usage
+- **Interruption Ctrl+C** : Sauvegarde propre des résultats de scan
+- **Kill du processus** : Fermeture ordonnée avec flush CSV garanti
+- **Crash recovery** : Données critiques sauvegardées même en urgence
+- **Pipeline debugging** : Arrêt propre pour inspection des états
+- **Intégration CI/CD** : Terminaison contrôlée des tests longs
+- **Production monitoring** : Statistiques d'arrêt pour surveillance
+
+---
+
+### 7. 💾 Gestionnaire Mémoire (Memory Manager)
+
+#### Fonctionnalité
+Gestionnaire mémoire haute performance avec pool allocator optimisé pour le parsing de fichiers CSV massifs. Fournit une allocation mémoire efficace avec défragmentation automatique et statistiques détaillées.
+
+#### Caractéristiques Techniques
+- **Pool Allocator** : Allocation par blocs avec réutilisation optimisée
+- **Best Fit Algorithm** : Algorithme de recherche de bloc optimal
+- **Défragmentation** : Fusion automatique des blocs libres adjacents
+- **Alignment Support** : Support alignement mémoire configurable
+- **Thread-Safety** : Accès concurrent thread-safe avec mutex
+- **Statistiques** : Monitoring détaillé usage/performance/fragmentation
+- **Memory Limits** : Contrôle des limites d'utilisation mémoire
+- **RAII Wrapper** : `ManagedPtr<T>` pour gestion automatique
+
+#### Configuration
+```cpp
+BBP::MemoryPoolConfig config;
+config.initial_pool_size = 1024 * 1024;        // Pool initial 1MB
+config.max_pool_size = 100 * 1024 * 1024;      // Pool maximum 100MB
+config.block_size = 64;                         // Taille de bloc par défaut
+config.alignment = sizeof(void*);               // Alignement par défaut
+config.enable_statistics = true;                // Statistiques détaillées
+config.enable_defragmentation = true;           // Défragmentation auto
+config.growth_factor = 2.0;                     // Facteur croissance x2
+config.defrag_threshold = 0.3;                  // Seuil fragmentation 30%
+
+auto& manager = BBP::MemoryManager::getInstance();
+manager.configure(config);
+manager.initialize();
+```
+
+#### Utilisation de Base
+```cpp
+#include "infrastructure/system/memory_manager.hpp"
+
+auto& manager = BBP::MemoryManager::getInstance();
+
+// Allocation simple
+void* ptr = manager.allocate(1024);
+if (ptr) {
+    // Utiliser la mémoire...
+    manager.deallocate(ptr);
+}
+
+// Allocation alignée
+void* aligned_ptr = manager.allocate(2048, 16);  // Aligné sur 16 bytes
+manager.deallocate(aligned_ptr);
+
+// Allocation de tableaux typés
+int* int_array = manager.allocate_array<int>(1000);
+for (int i = 0; i < 1000; ++i) {
+    int_array[i] = i * i;
+}
+manager.deallocate_array(int_array);
+```
+
+#### Pool Allocator STL-Compatible
+```cpp
+// Utilisation avec conteneurs STL
+auto allocator = manager.get_allocator<std::string>();
+std::vector<std::string, BBP::PoolAllocator<std::string>> csv_lines(allocator);
+
+// Parsing CSV optimisé
+csv_lines.reserve(10000);  // Pré-allocation pour CSV massif
+for (const auto& line : csv_data) {
+    csv_lines.push_back(parseCsvLine(line));  // Utilise pool allocator
+}
+```
+
+#### Wrapper RAII ManagedPtr
+```cpp
+// Gestion automatique avec RAII
+{
+    BBP::ManagedPtr<double> data_buffer(manager, 50000);  // 50k doubles
+    
+    // Utilisation comme tableau standard
+    for (size_t i = 0; i < data_buffer.count(); ++i) {
+        data_buffer[i] = calculateValue(i);
+    }
+    
+    // Traitement des données...
+    processDataBuffer(data_buffer.get(), data_buffer.count());
+    
+    // Désallocation automatique à la sortie de scope
+}
+```
+
+#### Optimisation pour CSV Massif
+```cpp
+// Configuration optimisée pour parsing CSV
+BBP::MemoryPoolConfig csv_config;
+csv_config.initial_pool_size = 10 * 1024 * 1024;   // 10MB initial
+csv_config.max_pool_size = 500 * 1024 * 1024;      // 500MB maximum
+csv_config.block_size = 256;                        // Blocs 256 bytes
+csv_config.enable_defragmentation = true;           // Défrag activée
+csv_config.defrag_threshold = 0.2;                  // Défrag à 20%
+
+manager.configure(csv_config);
+
+// Définir limite mémoire
+manager.setMemoryLimit(400 * 1024 * 1024);  // Limite 400MB
+
+// Allocation optimisée pour lignes CSV
+auto csv_allocator = manager.get_allocator<CsvRow>();
+std::vector<CsvRow, decltype(csv_allocator)> parsed_rows(csv_allocator);
+```
+
+#### Monitoring et Statistiques
+```cpp
+auto stats = manager.getStats();
+
+std::cout << "Pool total: " << stats.pool_size << " bytes" << std::endl;
+std::cout << "Mémoire utilisée: " << stats.current_used_bytes << " bytes" << std::endl;
+std::cout << "Pic utilisation: " << stats.peak_used_bytes << " bytes" << std::endl;
+std::cout << "Allocations totales: " << stats.total_allocations << std::endl;
+std::cout << "Fragmentation: " << (stats.fragmentation_ratio * 100) << "%" << std::endl;
+std::cout << "Défragmentations: " << stats.defragmentation_count << std::endl;
+
+// Temps moyens d'allocation/désallocation
+std::cout << "Temps alloc moyen: " << 
+    (stats.total_alloc_time.count() / stats.total_allocations) << "μs" << std::endl;
+
+// Distribution des tailles d'allocation
+for (const auto& [size, count] : stats.size_histogram) {
+    std::cout << "Taille " << size << ": " << count << " allocations" << std::endl;
+}
+```
+
+#### Maintenance et Optimisation
+```cpp
+// Vérification intégrité mémoire
+if (!manager.checkIntegrity()) {
+    LOG_ERROR("memory", "Corruption mémoire détectée!");
+}
+
+// Défragmentation manuelle
+manager.defragment();
+
+// Optimisation automatique
+manager.optimize();
+
+// Dump état pour debugging
+std::string debug_info = manager.dumpPoolState();
+LOG_DEBUG("memory", debug_info);
+
+// Suivi détaillé pour développement
+manager.setDetailedTracking(true);
+```
+
+#### Cas d'Usage Spécifiques
+- **Parsing CSV Géant** : Allocation efficace pour millions de lignes
+- **Buffer Management** : Gestion mémoire pour buffers temporaires
+- **String Processing** : Pool optimisé pour manipulation chaînes
+- **Data Structures** : Allocation rapide pour structures complexes
+- **Memory-Intensive** : Contrôle strict consommation mémoire
+- **High-Frequency** : Allocation/désallocation haute fréquence
+
+---
+
 # 🇺🇸 ENGLISH DOCUMENTATION
 
 ## 📋 Overview
@@ -627,6 +911,207 @@ auto stats = pool.getStats();
 - Concurrent domain processing
 - Critical task prioritization (scope validation)
 - CPU/network utilization optimization
+
+### 6. 🛡️ Signal Handler
+
+#### Functionality
+System signal management (SIGINT/SIGTERM) with guaranteed graceful shutdown and automatic CSV data flush to prevent data loss during interruptions.
+
+#### Technical Characteristics
+- **Handled Signals**: SIGINT (Ctrl+C), SIGTERM (kill)
+- **Graceful Shutdown**: Ordered execution of cleanup callbacks
+- **Guaranteed CSV Flush**: Priority CSV data saving
+- **Timeout Protection**: Configurable timeouts with emergency flush
+- **Thread-Safety**: Thread-safe management of multiple callbacks
+- **Statistics**: Shutdown and performance monitoring
+- **Emergency Mode**: Emergency flush on timeout
+
+#### Configuration
+```cpp
+BBP::SignalHandlerConfig config;
+config.shutdown_timeout = std::chrono::milliseconds(5000);     // 5 seconds
+config.csv_flush_timeout = std::chrono::milliseconds(2000);    // 2 seconds
+config.enable_emergency_flush = true;                          // Emergency flush enabled
+config.log_signal_details = true;                              // Detailed signal logging
+
+auto& handler = BBP::SignalHandler::getInstance();
+handler.configure(config);
+handler.initialize();
+```
+
+#### Usage
+```cpp
+#include "infrastructure/system/signal_handler.hpp"
+
+auto& handler = BBP::SignalHandler::getInstance();
+
+// Register general cleanup callback
+handler.registerCleanupCallback("thread_pool_cleanup", []() {
+    ThreadPool::getInstance().shutdown();
+    Logger::getInstance().info("cleanup", "Thread pool closed gracefully");
+});
+
+// Register CSV flush callback (priority)
+handler.registerCsvFlushCallback("/out/01_subdomains.csv", [](const std::string& path) {
+    CsvWriter writer(path);
+    writer.flushPendingData();
+    writer.close();
+    Logger::getInstance().info("csv_flush", "CSV saved: " + path);
+});
+
+// Initialize (registers SIGINT/SIGTERM)
+handler.initialize();
+
+// Main process continues...
+while (!handler.isShutdownRequested()) {
+    // Main work
+    doWork();
+    
+    if (handler.isShuttingDown()) {
+        Logger::getInstance().info("main", "Shutdown in progress...");
+        break;
+    }
+}
+
+// Wait for complete shutdown
+handler.waitForShutdown();
+```
+
+#### Statistics and Monitoring
+```cpp
+auto stats = handler.getStats();
+
+std::cout << "Signals received: " << stats.signals_received << std::endl;
+std::cout << "Successful shutdowns: " << stats.successful_shutdowns << std::endl;
+std::cout << "Timeouts: " << stats.timeout_shutdowns << std::endl;
+std::cout << "Last shutdown duration: " << stats.last_shutdown_duration.count() << "ms" << std::endl;
+std::cout << "Total CSV flush time: " << stats.total_csv_flush_time.count() << "ms" << std::endl;
+
+// Statistics per signal
+for (const auto& [signal, count] : stats.signal_counts) {
+    std::cout << "Signal " << signal << ": " << count << " times" << std::endl;
+}
+```
+
+#### Use Cases
+- **Ctrl+C Interruption**: Clean saving of scan results
+- **Process Kill**: Orderly shutdown with guaranteed CSV flush
+- **Crash Recovery**: Critical data saved even in emergency
+- **Pipeline Debugging**: Clean shutdown for state inspection
+- **CI/CD Integration**: Controlled termination of long tests
+- **Production Monitoring**: Shutdown statistics for surveillance
+
+### 7. 💾 Memory Manager
+
+#### Functionality
+High-performance memory manager with pool allocator optimized for massive CSV file parsing. Provides efficient memory allocation with automatic defragmentation and detailed statistics.
+
+#### Technical Characteristics
+- **Pool Allocator**: Block allocation with optimized reuse
+- **Best Fit Algorithm**: Optimal block search algorithm
+- **Defragmentation**: Automatic merging of adjacent free blocks
+- **Alignment Support**: Configurable memory alignment support
+- **Thread-Safety**: Thread-safe concurrent access with mutex
+- **Statistics**: Detailed usage/performance/fragmentation monitoring
+- **Memory Limits**: Memory usage limit control
+- **RAII Wrapper**: `ManagedPtr<T>` for automatic management
+
+#### Configuration
+```cpp
+BBP::MemoryPoolConfig config;
+config.initial_pool_size = 1024 * 1024;        // 1MB initial pool
+config.max_pool_size = 100 * 1024 * 1024;      // 100MB maximum pool
+config.block_size = 64;                         // Default block size
+config.alignment = sizeof(void*);               // Default alignment
+config.enable_statistics = true;                // Detailed statistics
+config.enable_defragmentation = true;           // Auto defragmentation
+config.growth_factor = 2.0;                     // Growth factor x2
+config.defrag_threshold = 0.3;                  // Fragmentation threshold 30%
+
+auto& manager = BBP::MemoryManager::getInstance();
+manager.configure(config);
+manager.initialize();
+```
+
+#### Basic Usage
+```cpp
+#include "infrastructure/system/memory_manager.hpp"
+
+auto& manager = BBP::MemoryManager::getInstance();
+
+// Simple allocation
+void* ptr = manager.allocate(1024);
+if (ptr) {
+    // Use memory...
+    manager.deallocate(ptr);
+}
+
+// Aligned allocation
+void* aligned_ptr = manager.allocate(2048, 16);  // 16-byte aligned
+manager.deallocate(aligned_ptr);
+
+// Typed array allocation
+int* int_array = manager.allocate_array<int>(1000);
+for (int i = 0; i < 1000; ++i) {
+    int_array[i] = i * i;
+}
+manager.deallocate_array(int_array);
+```
+
+#### STL-Compatible Pool Allocator
+```cpp
+// Usage with STL containers
+auto allocator = manager.get_allocator<std::string>();
+std::vector<std::string, BBP::PoolAllocator<std::string>> csv_lines(allocator);
+
+// Optimized CSV parsing
+csv_lines.reserve(10000);  // Pre-allocation for massive CSV
+for (const auto& line : csv_data) {
+    csv_lines.push_back(parseCsvLine(line));  // Uses pool allocator
+}
+```
+
+#### RAII ManagedPtr Wrapper
+```cpp
+// Automatic management with RAII
+{
+    BBP::ManagedPtr<double> data_buffer(manager, 50000);  // 50k doubles
+    
+    // Use as standard array
+    for (size_t i = 0; i < data_buffer.count(); ++i) {
+        data_buffer[i] = calculateValue(i);
+    }
+    
+    // Process data...
+    processDataBuffer(data_buffer.get(), data_buffer.count());
+    
+    // Automatic deallocation on scope exit
+}
+```
+
+#### Statistics and Monitoring
+```cpp
+auto stats = manager.getStats();
+
+std::cout << "Total pool: " << stats.pool_size << " bytes" << std::endl;
+std::cout << "Used memory: " << stats.current_used_bytes << " bytes" << std::endl;
+std::cout << "Peak usage: " << stats.peak_used_bytes << " bytes" << std::endl;
+std::cout << "Total allocations: " << stats.total_allocations << std::endl;
+std::cout << "Fragmentation: " << (stats.fragmentation_ratio * 100) << "%" << std::endl;
+std::cout << "Defragmentations: " << stats.defragmentation_count << std::endl;
+
+// Average allocation/deallocation times
+std::cout << "Avg alloc time: " << 
+    (stats.total_alloc_time.count() / stats.total_allocations) << "μs" << std::endl;
+```
+
+#### Use Cases
+- **Giant CSV Parsing**: Efficient allocation for millions of lines
+- **Buffer Management**: Memory management for temporary buffers
+- **String Processing**: Optimized pool for string manipulation
+- **Data Structures**: Fast allocation for complex structures
+- **Memory-Intensive**: Strict memory consumption control
+- **High-Frequency**: High-frequency allocation/deallocation
 
 ---
 

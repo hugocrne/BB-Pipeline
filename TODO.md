@@ -9,8 +9,8 @@
 - [x] **Configuration Manager** - Parsing YAML avec validation, templates, environnement
 - [x] **Cache System** - ETag/Last-Modified intelligent avec TTL configurable
 - [x] **Thread Pool** - Gestionnaire threads avec queue prioritaire et load balancing
-- [ ] **Signal Handler** - Gestion SIGINT/SIGTERM propre avec flush CSV garanti
-- [ ] **Memory Manager** - Pool allocator optimisé pour parsing CSV massif
+- [x] **Signal Handler** - Gestion SIGINT/SIGTERM propre avec flush CSV garanti
+- [x] **Memory Manager** - Pool allocator optimisé pour parsing CSV massif ✅
 - [ ] **Error Recovery** - Auto-retry avec exponential backoff sur failures réseau
 
 ### CSV Engine

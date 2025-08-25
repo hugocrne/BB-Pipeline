@@ -8,3 +8,4 @@ J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tout ton code doit etre testé a 100%
     - tu dois organiser ton code dans une architecture de dossiers qui facilite la navigation pour tout les developpeurs
     - tu dois documenter en francais et en anglais les fonctionnalités crées dans le fichier doc.md d'une manière très précise mais comprehensible sans avoir besoin d'aller voir dans le code
+    - n'oublie pas de cocher dans le TODO.md la case corresoindant a la feature que tu a développé
