@@ -1,6 +1,8 @@
 passons à :
 
-- [ ] **Error Recovery** - Auto-retry avec exponential backoff sur failures réseau
+### CSV Engine
+
+- [ ] **Streaming Parser** - Lecture CSV géantes sans chargement mémoire complet
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

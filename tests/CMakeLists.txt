@@ -13,6 +13,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 set(TEST_SOURCES
     test_memory_manager.cpp
     test_error_recovery.cpp
+    test_schema_validator.cpp
 )
 
 # --- Create test executables

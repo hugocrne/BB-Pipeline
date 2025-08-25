@@ -15,7 +15,7 @@
 
 ### CSV Engine
 
-- [ ] **Schema Validator** - Validation stricte des contrats E/S avec versioning
+- [x] **Schema Validator** - Validation stricte des contrats E/S avec versioning ✅
 - [ ] **Streaming Parser** - Lecture CSV géantes sans chargement mémoire complet
 - [ ] **Batch Writer** - Écriture CSV optimisée avec flush périodique et compression
 - [ ] **Merger Engine** - Fusion intelligente de CSV multiples avec déduplication
