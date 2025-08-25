@@ -12,6 +12,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 # --- Test executables
 set(TEST_SOURCES
     test_memory_manager.cpp
+    test_error_recovery.cpp
 )
 
 # --- Create test executables
@@ -34,6 +35,11 @@ endforeach()
 add_executable(test_memory_manager_simple test_memory_manager_simple.cpp)
 target_link_libraries(test_memory_manager_simple bbp-core)
 add_test(NAME test_memory_manager_simple COMMAND test_memory_manager_simple)
+
+# --- Error Recovery integration test (simple test without GoogleTest)
+add_executable(test_error_recovery_simple test_error_recovery_simple.cpp)
+target_link_libraries(test_error_recovery_simple bbp-core)
+add_test(NAME test_error_recovery_simple COMMAND test_error_recovery_simple)
 
 # --- Integration test (if main.cpp exists)
 # if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp)

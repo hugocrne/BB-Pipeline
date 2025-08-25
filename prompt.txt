@@ -1,6 +1,6 @@
 passons à :
 
-- [ ] **Memory Manager** - Pool allocator optimisé pour parsing CSV massif
+- [ ] **Error Recovery** - Auto-retry avec exponential backoff sur failures réseau
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

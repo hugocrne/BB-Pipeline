@@ -597,8 +597,515 @@ manager.setDetailedTracking(true);
 - **Buffer Management** : Gestion mémoire pour buffers temporaires
 - **String Processing** : Pool optimisé pour manipulation chaînes
 - **Data Structures** : Allocation rapide pour structures complexes
-- **Memory-Intensive** : Contrôle strict consommation mémoire
-- **High-Frequency** : Allocation/désallocation haute fréquence
+
+---
+
+## Error Recovery - Auto-retry avec Exponential Backoff
+
+Le système **Error Recovery** de BB-Pipeline implémente une stratégie de récupération d'erreurs sophistiquée avec retry automatique et backoff exponentiel. Ce composant est essentiel pour la robustesse des opérations réseau et la fiabilité générale du framework.
+
+### Fonctionnalités Principales
+
+#### Retry Automatique Intelligent
+- **Exponential Backoff** : Délais croissants exponentiels entre retries
+- **Jitter Aléatoire** : Évite l'effet "thundering herd" avec randomisation
+- **Classification d'Erreurs** : Distinction automatique erreurs récupérables/permanentes
+- **Limites Configurables** : Nombre max tentatives, délais min/max personnalisables
+- **Circuit Breaker** : Protection contre cascades d'échecs avec désactivation auto
+
+#### Support Multi-Threading
+- **Thread-Safe** : Accès concurrent sécurisé avec protection mutex
+- **Opérations Asynchrones** : Support natif std::future et std::async
+- **Contexte Par Thread** : Isolation des tentatives par opération/thread
+- **Statistiques Globales** : Agrégation thread-safe des métriques de performance
+
+#### Monitoring et Observabilité
+- **Statistiques Détaillées** : Tracking complet succès/échecs/temps retry
+- **Classification Erreurs** : Comptage par type d'erreur avec historique
+- **Logging Configurable** : Traces détaillées optionnelles pour debugging
+- **Métriques Temps Réel** : Monitoring continu performance et fiabilité
+
+### Architecture Technique
+
+#### Types d'Erreurs Récupérables
+```cpp
+enum class RecoverableErrorType {
+    NETWORK_TIMEOUT,        // Timeout réseau
+    CONNECTION_REFUSED,     // Connexion refusée
+    DNS_RESOLUTION,         // Échec résolution DNS  
+    SSL_HANDSHAKE,         // Échec handshake SSL
+    HTTP_5XX,              // Erreurs serveur HTTP 5xx
+    HTTP_429,              // Rate limiting HTTP 429
+    SOCKET_ERROR,          // Erreur socket générale
+    TEMPORARY_FAILURE,     // Échec service temporaire
+    CUSTOM                 // Erreur récupérable personnalisée
+};
+```
+
+#### Configuration Retry Avancée
+```cpp
+struct RetryConfig {
+    size_t max_attempts{3};                          // Tentatives maximum
+    std::chrono::milliseconds initial_delay{100};   // Délai initial ms
+    std::chrono::milliseconds max_delay{30000};     // Délai max ms  
+    double backoff_multiplier{2.0};                 // Multiplicateur backoff
+    double jitter_factor{0.1};                      // Facteur jitter 0-1
+    bool enable_jitter{true};                       // Active randomisation
+    std::unordered_set<RecoverableErrorType> recoverable_errors; // Erreurs récupérables
+};
+```
+
+#### Statistiques Temps Réel
+```cpp
+struct RetryStatistics {
+    size_t total_operations{0};                      // Opérations totales
+    size_t successful_operations{0};                 // Opérations réussies
+    size_t failed_operations{0};                     // Opérations échouées
+    size_t total_retries{0};                         // Retries totaux
+    std::chrono::milliseconds total_retry_time{0};   // Temps retry total
+    std::chrono::milliseconds average_retry_time{0}; // Temps retry moyen
+    std::unordered_map<RecoverableErrorType, size_t> error_counts; // Compte par type
+    std::vector<RetryAttempt> recent_attempts;       // Tentatives récentes
+};
+```
+
+### Utilisation Pratique
+
+#### Configuration et Initialisation
+```cpp
+#include "infrastructure/system/error_recovery.hpp"
+
+// Obtenir instance singleton
+auto& recovery = BBP::ErrorRecoveryManager::getInstance();
+
+// Configuration réseau typique
+auto network_config = BBP::ErrorRecoveryUtils::createNetworkRetryConfig();
+network_config.max_attempts = 5;
+network_config.initial_delay = std::chrono::milliseconds(200);
+network_config.max_delay = std::chrono::milliseconds(10000);
+network_config.backoff_multiplier = 2.5;
+network_config.jitter_factor = 0.2;
+
+recovery.configure(network_config);
+recovery.setDetailedLogging(true);
+```
+
+#### Exécution avec Retry Automatique
+```cpp
+// Opération simple avec retry automatique
+try {
+    auto result = recovery.executeWithRetry("http_request", [&]() {
+        // Code pouvant échouer (requête HTTP, DNS, etc.)
+        return performHttpRequest(url);
+    });
+    
+    std::cout << "Succès: " << result << std::endl;
+    
+} catch (const BBP::RetryExhaustedException& e) {
+    std::cerr << "Retries épuisés: " << e.what() << std::endl;
+} catch (const BBP::NonRecoverableError& e) {
+    std::cerr << "Erreur non récupérable: " << e.what() << std::endl;
+}
+```
+
+#### Configuration Personnalisée par Opération
+```cpp
+// Config spécifique pour API critiques
+BBP::RetryConfig api_config;
+api_config.max_attempts = 7;
+api_config.initial_delay = std::chrono::milliseconds(500);
+api_config.backoff_multiplier = 1.8;
+api_config.recoverable_errors = {
+    BBP::RecoverableErrorType::HTTP_5XX,
+    BBP::RecoverableErrorType::HTTP_429,
+    BBP::RecoverableErrorType::NETWORK_TIMEOUT
+};
+
+auto api_result = recovery.executeWithRetry("critical_api", api_config, [&]() {
+    return callCriticalAPI(params);
+});
+```
+
+#### Opérations Asynchrones
+```cpp
+// Retry asynchrone avec futures
+std::vector<std::future<std::string>> futures;
+
+for (const auto& url : urls) {
+    futures.push_back(recovery.executeAsyncWithRetry("bulk_request", [url]() {
+        return downloadContent(url);
+    }));
+}
+
+// Récupération résultats
+for (auto& future : futures) {
+    try {
+        auto content = future.get();
+        processContent(content);
+    } catch (const std::exception& e) {
+        std::cerr << "Échec async: " << e.what() << std::endl;
+    }
+}
+```
+
+#### RAII avec AutoRetryGuard
+```cpp
+// Gestion automatique lifecycle retry
+BBP::AutoRetryGuard guard("database_operation", db_config);
+
+auto connection = guard.execute([&]() {
+    return database.connect(connection_string);
+});
+
+auto results = guard.execute([&]() {
+    return connection.query("SELECT * FROM large_table");
+});
+```
+
+#### Circuit Breaker Protection
+```cpp
+// Configuration circuit breaker
+recovery.setCircuitBreakerThreshold(10); // Ouvre après 10 échecs consécutifs
+
+// Vérification état
+if (recovery.isCircuitBreakerOpen()) {
+    std::cout << "Circuit ouvert - service dégradé" << std::endl;
+    return fallback_response();
+}
+
+// Reset manuel si nécessaire
+recovery.resetCircuitBreaker();
+```
+
+### Monitoring et Diagnostics
+
+#### Statistiques Détaillées
+```cpp
+auto stats = recovery.getStatistics();
+
+std::cout << "=== Statistiques Error Recovery ===" << std::endl;
+std::cout << "Opérations totales: " << stats.total_operations << std::endl;
+std::cout << "Taux de succès: " << 
+    ((double)stats.successful_operations / stats.total_operations * 100.0) << "%" << std::endl;
+std::cout << "Retries moyens: " << 
+    ((double)stats.total_retries / stats.total_operations) << std::endl;
+std::cout << "Temps retry moyen: " << stats.average_retry_time.count() << "ms" << std::endl;
+
+// Détail par type d'erreur
+std::cout << "\n=== Distribution Erreurs ===" << std::endl;
+for (const auto& [type, count] : stats.error_counts) {
+    std::cout << "Type " << static_cast<int>(type) << ": " << count << std::endl;
+}
+```
+
+#### Classification d'Erreurs Personnalisée
+```cpp
+// Ajout classificateur custom pour APIs spécifiques  
+recovery.addErrorClassifier([](const std::exception& e) -> BBP::RecoverableErrorType {
+    std::string message = e.what();
+    
+    if (message.find("rate_limit_exceeded") != std::string::npos) {
+        return BBP::RecoverableErrorType::HTTP_429;
+    }
+    
+    if (message.find("temporary_maintenance") != std::string::npos) {
+        return BBP::RecoverableErrorType::TEMPORARY_FAILURE;
+    }
+    
+    return BBP::RecoverableErrorType::CUSTOM;
+});
+```
+
+#### Configurations Pré-définies
+```cpp
+// Configurations optimisées par cas d'usage
+
+// Opérations réseau standard
+auto network_config = BBP::ErrorRecoveryUtils::createNetworkRetryConfig();
+
+// Requêtes HTTP avec rate limiting
+auto http_config = BBP::ErrorRecoveryUtils::createHttpRetryConfig();
+
+// Connexions base de données
+auto db_config = BBP::ErrorRecoveryUtils::createDatabaseRetryConfig();
+
+// Classification automatique erreurs HTTP
+auto error_type = BBP::ErrorRecoveryUtils::classifyHttpError(503); // TEMPORARY_FAILURE
+
+// Classification erreurs réseau système  
+auto net_error = BBP::ErrorRecoveryUtils::classifyNetworkError(ETIMEDOUT); // NETWORK_TIMEOUT
+```
+
+### Cas d'Usage Avancés
+
+#### Integration avec Rate Limiter
+```cpp
+// Combinaison retry + rate limiting pour APIs
+auto& rate_limiter = BBP::RateLimiter::getInstance();
+auto rate_limit_config = BBP::ErrorRecoveryUtils::createHttpRetryConfig();
+
+auto api_response = recovery.executeWithRetry("rate_limited_api", rate_limit_config, [&]() {
+    rate_limiter.acquireToken("api.service.com");
+    return callExternalAPI(request);
+});
+```
+
+#### Retry Conditionnel Avancé
+```cpp
+// Retry avec conditions métier complexes
+recovery.executeWithRetry("conditional_retry", [&]() {
+    auto result = performBusinessOperation();
+    
+    // Validation métier post-opération
+    if (!result.isValid()) {
+        throw BBP::RecoverableError("Validation métier échouée");
+    }
+    
+    return result;
+});
+```
+
+#### Fallback et Degraded Mode
+```cpp
+// Pattern fallback avec retry
+std::string fetchData(const std::string& key) {
+    try {
+        return recovery.executeWithRetry("primary_cache", [&]() {
+            return primary_cache.get(key);
+        });
+    } catch (const BBP::RetryExhaustedException&) {
+        // Fallback sur cache secondaire
+        return secondary_cache.get(key);  
+    }
+}
+```
+
+### Caractéristiques Techniques
+
+#### Performance et Scalabilité
+- **Thread-Safe** : Accès concurrent optimisé avec minimal contention
+- **Memory Efficient** : Faible overhead mémoire par contexte retry
+- **Low Latency** : Calcul délais optimisé sans allocation dynamique  
+- **High Throughput** : Support milliers d'opérations concurrentes
+
+#### Robustesse et Fiabilité  
+- **Exception Safety** : Garanties RAII et exception-safe
+- **Circuit Protection** : Prévention cascades d'échecs système
+- **Graceful Degradation** : Fonctionnement dégradé intelligent
+- **Monitoring Intégré** : Observabilité complète sans overhead
+
+#### Configuration Flexible
+- **Policy-Based** : Configuration fine par type d'opération
+- **Runtime Adjustable** : Modification paramètres à chaud
+- **Environment Aware** : Adaptation automatique contexte déploiement
+- **Extensible** : Classification erreurs et stratégies personnalisables
+
+---
+
+## Error Recovery - Auto-retry with Exponential Backoff (EN)
+
+The **Error Recovery** system in BB-Pipeline implements a sophisticated error recovery strategy with automatic retry and exponential backoff. This component is essential for network operations robustness and overall framework reliability.
+
+### Key Features
+
+#### Intelligent Auto-Retry
+- **Exponential Backoff**: Exponentially increasing delays between retries
+- **Random Jitter**: Prevents "thundering herd" effect with randomization
+- **Error Classification**: Automatic distinction between recoverable/permanent errors
+- **Configurable Limits**: Customizable max attempts, min/max delays
+- **Circuit Breaker**: Protection against failure cascades with auto-disable
+
+#### Multi-Threading Support
+- **Thread-Safe**: Secure concurrent access with mutex protection
+- **Async Operations**: Native std::future and std::async support
+- **Per-Thread Context**: Operation/thread attempt isolation
+- **Global Statistics**: Thread-safe performance metrics aggregation
+
+#### Monitoring & Observability
+- **Detailed Statistics**: Complete tracking of success/failures/retry times
+- **Error Classification**: Per-error-type counting with history
+- **Configurable Logging**: Optional detailed traces for debugging
+- **Real-time Metrics**: Continuous performance and reliability monitoring
+
+### Technical Architecture
+
+#### Error Types and Configuration
+```cpp
+// Recoverable error types
+enum class RecoverableErrorType {
+    NETWORK_TIMEOUT,        // Network timeout
+    CONNECTION_REFUSED,     // Connection refused
+    DNS_RESOLUTION,         // DNS resolution failure
+    SSL_HANDSHAKE,         // SSL handshake failure
+    HTTP_5XX,              // HTTP 5xx server errors
+    HTTP_429,              // HTTP 429 rate limiting
+    SOCKET_ERROR,          // General socket error
+    TEMPORARY_FAILURE,     // Temporary service failure
+    CUSTOM                 // Custom recoverable error
+};
+
+// Advanced retry configuration
+struct RetryConfig {
+    size_t max_attempts{3};                          // Maximum attempts
+    std::chrono::milliseconds initial_delay{100};   // Initial delay ms
+    std::chrono::milliseconds max_delay{30000};     // Max delay ms
+    double backoff_multiplier{2.0};                 // Backoff multiplier
+    double jitter_factor{0.1};                      // Jitter factor 0-1
+    bool enable_jitter{true};                       // Enable randomization
+    std::unordered_set<RecoverableErrorType> recoverable_errors; // Recoverable errors
+};
+```
+
+### Practical Usage
+
+#### Basic Configuration
+```cpp
+#include "infrastructure/system/error_recovery.hpp"
+
+// Get singleton instance
+auto& recovery = BBP::ErrorRecoveryManager::getInstance();
+
+// Typical network configuration
+auto network_config = BBP::ErrorRecoveryUtils::createNetworkRetryConfig();
+network_config.max_attempts = 5;
+network_config.initial_delay = std::chrono::milliseconds(200);
+network_config.backoff_multiplier = 2.5;
+
+recovery.configure(network_config);
+```
+
+#### Automatic Retry Execution
+```cpp
+// Simple operation with automatic retry
+try {
+    auto result = recovery.executeWithRetry("http_request", [&]() {
+        return performHttpRequest(url);
+    });
+    
+    std::cout << "Success: " << result << std::endl;
+    
+} catch (const BBP::RetryExhaustedException& e) {
+    std::cerr << "Retries exhausted: " << e.what() << std::endl;
+} catch (const BBP::NonRecoverableError& e) {
+    std::cerr << "Non-recoverable error: " << e.what() << std::endl;
+}
+```
+
+#### Asynchronous Operations
+```cpp
+// Async retry with futures
+std::vector<std::future<std::string>> futures;
+
+for (const auto& url : urls) {
+    futures.push_back(recovery.executeAsyncWithRetry("bulk_request", [url]() {
+        return downloadContent(url);
+    }));
+}
+
+// Collect results
+for (auto& future : futures) {
+    try {
+        auto content = future.get();
+        processContent(content);
+    } catch (const std::exception& e) {
+        std::cerr << "Async failed: " << e.what() << std::endl;
+    }
+}
+```
+
+#### Circuit Breaker Protection
+```cpp
+// Configure circuit breaker
+recovery.setCircuitBreakerThreshold(10); // Opens after 10 consecutive failures
+
+// Check state
+if (recovery.isCircuitBreakerOpen()) {
+    std::cout << "Circuit open - degraded service" << std::endl;
+    return fallback_response();
+}
+
+// Manual reset if needed
+recovery.resetCircuitBreaker();
+```
+
+### Advanced Use Cases
+
+#### Custom Error Classification
+```cpp
+// Add custom classifier for specific APIs
+recovery.addErrorClassifier([](const std::exception& e) -> BBP::RecoverableErrorType {
+    std::string message = e.what();
+    
+    if (message.find("rate_limit_exceeded") != std::string::npos) {
+        return BBP::RecoverableErrorType::HTTP_429;
+    }
+    
+    if (message.find("temporary_maintenance") != std::string::npos) {
+        return BBP::RecoverableErrorType::TEMPORARY_FAILURE;
+    }
+    
+    return BBP::RecoverableErrorType::CUSTOM;
+});
+```
+
+#### Integration with Rate Limiter
+```cpp
+// Combine retry + rate limiting for APIs
+auto& rate_limiter = BBP::RateLimiter::getInstance();
+
+auto api_response = recovery.executeWithRetry("rate_limited_api", [&]() {
+    rate_limiter.acquireToken("api.service.com");
+    return callExternalAPI(request);
+});
+```
+
+#### Fallback Patterns
+```cpp
+// Fallback pattern with retry
+std::string fetchData(const std::string& key) {
+    try {
+        return recovery.executeWithRetry("primary_cache", [&]() {
+            return primary_cache.get(key);
+        });
+    } catch (const BBP::RetryExhaustedException&) {
+        // Fallback to secondary cache
+        return secondary_cache.get(key);
+    }
+}
+```
+
+### Statistics and Monitoring
+
+```cpp
+auto stats = recovery.getStatistics();
+
+std::cout << "=== Error Recovery Statistics ===" << std::endl;
+std::cout << "Total operations: " << stats.total_operations << std::endl;
+std::cout << "Success rate: " << 
+    ((double)stats.successful_operations / stats.total_operations * 100.0) << "%" << std::endl;
+std::cout << "Average retries: " << 
+    ((double)stats.total_retries / stats.total_operations) << std::endl;
+std::cout << "Average retry time: " << stats.average_retry_time.count() << "ms" << std::endl;
+
+// Error type breakdown
+for (const auto& [type, count] : stats.error_counts) {
+    std::cout << "Type " << static_cast<int>(type) << ": " << count << std::endl;
+}
+```
+
+### Technical Characteristics
+
+#### Performance Features
+- **Thread-Safe**: Optimized concurrent access with minimal contention
+- **Memory Efficient**: Low memory overhead per retry context
+- **Low Latency**: Optimized delay calculation without dynamic allocation
+- **High Throughput**: Support for thousands of concurrent operations
+
+#### Reliability Features
+- **Exception Safety**: RAII guarantees and exception-safe design
+- **Circuit Protection**: Prevents system failure cascades
+- **Graceful Degradation**: Intelligent degraded mode operation
+- **Integrated Monitoring**: Complete observability without overhead
 
 ---
 

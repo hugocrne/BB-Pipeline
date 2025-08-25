@@ -11,7 +11,7 @@
 - [x] **Thread Pool** - Gestionnaire threads avec queue prioritaire et load balancing
 - [x] **Signal Handler** - Gestion SIGINT/SIGTERM propre avec flush CSV garanti
 - [x] **Memory Manager** - Pool allocator optimisé pour parsing CSV massif ✅
-- [ ] **Error Recovery** - Auto-retry avec exponential backoff sur failures réseau
+- [x] **Error Recovery** - Auto-retry avec exponential backoff sur failures réseau ✅
 
 ### CSV Engine
 
