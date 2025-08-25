@@ -1,8 +1,8 @@
 // EN: Implementation of the ThreadPool class. Provides high-performance thread pool with priority queue and auto-scaling.
 // FR: Implémentation de la classe ThreadPool. Fournit un pool de threads haute performance avec queue prioritaire et auto-scaling.
 
-#include "../include/core/thread_pool.hpp"
-#include "../include/core/logger.hpp"
+#include "../../../include/infrastructure/threading/thread_pool.hpp"
+#include "../../../include/infrastructure/logging/logger.hpp"
 #include <algorithm>
 #include <stdexcept>
 

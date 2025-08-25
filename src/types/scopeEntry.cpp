@@ -1,7 +1,7 @@
 // EN: Implementation of the ScopeEntry class. Handles construction and printing of a scope entry.
 // FR : Implémentation de la classe ScopeEntry. Gère la construction et l'affichage d'une entrée de scope.
 
-#include "../include/types/scopeEntry.hpp"
+#include "../../include/types/scopeEntry.hpp"
 
 #include <ostream>
 

@@ -1,0 +1,10 @@
+passons à :
+
+- [ ] **Memory Manager** - Pool allocator optimisé pour parsing CSV massif
+
+J'aimerais que tu code cette feature en suivant les consignes suivantes :
+    - tu dois me produire un code professionnel
+    - tu dois commenter ton code en Anglais puis en francais
+    - tout ton code doit etre testé a 100%
+    - tu dois organiser ton code dans une architecture de dossiers qui facilite la navigation pour tout les developpeurs
+    - tu dois documenter en francais et en anglais les fonctionnalités crées dans le fichier doc.md d'une manière très précise mais comprehensible sans avoir besoin d'aller voir dans le code

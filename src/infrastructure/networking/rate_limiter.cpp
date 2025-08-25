@@ -1,7 +1,7 @@
 // EN: Implementation of the RateLimiter class. Provides per-domain token bucket rate limiting with adaptive backoff.
 // FR: Implémentation de la classe RateLimiter. Fournit une limitation de débit par token bucket par domaine avec backoff adaptatif.
 
-#include "../include/core/rate_limiter.hpp"
+#include "../../../include/infrastructure/networking/rate_limiter.hpp"
 #include <algorithm>
 #include <thread>
 

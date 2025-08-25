@@ -2,7 +2,7 @@
 // them. FR : Implémentation de la classe Scope. Gère le chargement des entrées de scope depuis un
 // fichier CSV et leur affichage.
 
-#include "../include/types/scope.hpp"
+#include "../../include/types/scope.hpp"
 
 #include <cctype>
 #include <fstream>

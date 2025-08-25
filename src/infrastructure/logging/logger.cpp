@@ -1,7 +1,7 @@
 // EN: Implementation of the Logger class. Provides thread-safe NDJSON logging with correlation IDs.
 // FR: Implémentation de la classe Logger. Fournit un logging NDJSON thread-safe avec IDs de corrélation.
 
-#include "../include/core/logger.hpp"
+#include "../../../include/infrastructure/logging/logger.hpp"
 #include <iomanip>
 #include <iostream>
 #include <random>

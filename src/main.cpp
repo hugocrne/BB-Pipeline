@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include "./include/types/scope.hpp"
+#include "types/scope.hpp"
 
 int main() {
 

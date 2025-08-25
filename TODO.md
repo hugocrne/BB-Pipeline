@@ -5,10 +5,10 @@
 ### System Core
 
 - [x] **Logger System** - Logs NDJSON structurés avec corrélation IDs, niveaux debug/info/warn/error
-- [x] **Rate Limiter** - Token bucket par domaine/programme avec backoff adaptatif
+- [x] **Rate Limiter** - Token bucket par domaine/programme avec backoff adaptatif  
 - [x] **Configuration Manager** - Parsing YAML avec validation, templates, environnement
-- [ ] **Cache System** - ETag/Last-Modified intelligent avec TTL configurable
-- [ ] **Thread Pool** - Gestionnaire threads avec queue prioritaire et load balancing
+- [x] **Cache System** - ETag/Last-Modified intelligent avec TTL configurable
+- [x] **Thread Pool** - Gestionnaire threads avec queue prioritaire et load balancing
 - [ ] **Signal Handler** - Gestion SIGINT/SIGTERM propre avec flush CSV garanti
 - [ ] **Memory Manager** - Pool allocator optimisé pour parsing CSV massif
 - [ ] **Error Recovery** - Auto-retry avec exponential backoff sur failures réseau

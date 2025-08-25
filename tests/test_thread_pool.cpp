@@ -1,4 +1,4 @@
-#include "../src/include/core/thread_pool.hpp"
+#include "../include/infrastructure/threading/thread_pool.hpp"
 #include <cassert>
 #include <iostream>
 #include <thread>

@@ -1,8 +1,8 @@
 // EN: Implementation of the CacheSystem class. Provides HTTP caching with ETag/Last-Modified validation and TTL management.
 // FR: Implémentation de la classe CacheSystem. Fournit la mise en cache HTTP avec validation ETag/Last-Modified et gestion TTL.
 
-#include "../include/core/cache_system.hpp"
-#include "../include/core/logger.hpp"
+#include "../../../include/infrastructure/networking/cache_system.hpp"
+#include "../../../include/infrastructure/logging/logger.hpp"
 #include <algorithm>
 #include <regex>
 #include <sstream>

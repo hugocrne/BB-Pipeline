@@ -53,8 +53,8 @@ find_package(CURL REQUIRED)
 find_package(ZLIB REQUIRED)
 pkg_check_modules(YAMLCPP REQUIRED yaml-cpp)
 
-# --- Include public global (tu pourras migrer module par module plus tard)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/include)
+# --- Include directories for new modular structure
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # --- Ne plus créer/forcer des dossiers src/* (tu gères l'arbo)
 # (On garde uniquement les dossiers de données/outils)
@@ -66,13 +66,13 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/schemas)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
-# --- Core library avec Logger System, Rate Limiter, Configuration Manager, Cache System et Thread Pool
+# --- Core library avec infrastructure modulaire
 add_library(bbp-core
-  src/core/logger.cpp
-  src/core/rate_limiter.cpp
-  src/core/config_manager.cpp
-  src/core/cache_system.cpp
-  src/core/thread_pool.cpp
+  src/infrastructure/logging/logger.cpp
+  src/infrastructure/networking/rate_limiter.cpp
+  src/infrastructure/networking/cache_system.cpp
+  src/infrastructure/threading/thread_pool.cpp
+  src/infrastructure/config/config_manager.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL
@@ -84,7 +84,7 @@ target_link_libraries(bbp-core PUBLIC
 )
 target_link_directories(bbp-core PUBLIC ${YAMLCPP_LIBRARY_DIRS})
 target_include_directories(bbp-core PUBLIC ${YAMLCPP_INCLUDE_DIRS})
-target_include_directories(bbp-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/include)
+target_include_directories(bbp-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # --- Orchestrateur: binaire unique à partir de src/main.cpp
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)

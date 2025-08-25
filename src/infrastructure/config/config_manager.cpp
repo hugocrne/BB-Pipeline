@@ -1,8 +1,8 @@
 // EN: Implementation of the ConfigManager class. Provides YAML configuration parsing, validation, and templates.
 // FR: Implémentation de la classe ConfigManager. Fournit le parsing de configuration YAML, validation et templates.
 
-#include "../include/core/config_manager.hpp"
-#include "../include/core/logger.hpp"
+#include "../../../include/infrastructure/config/config_manager.hpp"
+#include "../../../include/infrastructure/logging/logger.hpp"
 #include <yaml-cpp/yaml.h>
 #include <fstream>
 #include <sstream>
