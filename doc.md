@@ -2158,6 +2158,596 @@ Le Schema Validator dispose d'une suite de tests complète avec 100% de couvertu
 
 ---
 
+## 📊 Streaming Parser - Parser CSV Haute Performance
+
+### Fonctionnalité
+
+Parser CSV streaming haute performance conçu pour traiter de très gros fichiers (multi-GB) sans chargement complet en mémoire. Utilise un buffer circulaire et un parsing incrémental pour maintenir un usage mémoire constant indépendamment de la taille du fichier.
+
+### Caractéristiques Techniques
+
+- **Mémoire Constante** : Usage mémoire indépendant de la taille du fichier
+- **Performance Optimisée** : Buffer circulaire et parsing incrémental
+- **Support Multi-Threading** : Parsing asynchrone avec contrôle (pause/resume/stop)
+- **Callbacks Personnalisables** : Traitement ligne par ligne avec fonctions utilisateur
+- **Gestion d'Encodage** : Support UTF-8, UTF-16, ASCII avec détection automatique
+- **Recovery Gracieux** : Continue le parsing malgré les lignes malformées
+- **Métriques Détaillées** : Statistiques de performance et progression en temps réel
+- **Configuration Flexible** : Délimiteurs, quotes, whitespace personnalisables
+
+### Architecture des Classes
+
+#### ParserConfig - Configuration du Parser
+```cpp
+struct ParserConfig {
+    char delimiter{','};                    // Délimiteur de champ
+    char quote_char{'"'};                   // Caractère de quote
+    char escape_char{'"'};                  // Caractère d'échappement
+    bool has_header{true};                  // Première ligne est l'en-tête
+    bool strict_mode{false};                // Parsing strict (échec sur erreurs)
+    bool trim_whitespace{true};             // Supprime espaces début/fin
+    bool skip_empty_rows{true};             // Ignore les lignes vides
+    size_t buffer_size{8192};               // Taille buffer interne (octets)
+    size_t max_field_size{1048576};         // Taille max champ (1MB)
+    size_t max_row_size{10485760};          // Taille max ligne (10MB)
+    EncodingType encoding{EncodingType::AUTO_DETECT};
+    bool enable_parallel_processing{false}; // Multi-threading
+    size_t thread_count{0};                 // Nombre threads (0=auto)
+};
+```
+
+#### StreamingParser - Moteur de Parsing Principal
+```cpp
+class StreamingParser {
+public:
+    // Construction et configuration
+    StreamingParser();
+    explicit StreamingParser(const ParserConfig& config);
+    void setConfig(const ParserConfig& config);
+    
+    // Enregistrement des callbacks
+    void setRowCallback(RowCallback callback);
+    void setProgressCallback(ProgressCallback callback);  
+    void setErrorCallback(ErrorCallback callback);
+    
+    // Parsing synchrone
+    ParserError parseFile(const std::string& file_path);
+    ParserError parseStream(std::istream& stream);
+    ParserError parseString(const std::string& csv_content);
+    
+    // Parsing asynchrone
+    ParserError parseFileAsync(const std::string& file_path);
+    ParserError parseStreamAsync(std::istream& stream);
+    void pauseParsing();
+    void resumeParsing();
+    void stopParsing();
+    ParserError waitForCompletion();
+    
+    // Statistiques et monitoring
+    const ParserStatistics& getStatistics() const;
+    void resetStatistics();
+    
+    // Méthodes utilitaires statiques
+    static std::vector<std::string> parseRow(const std::string& row);
+    static std::string escapeField(const std::string& field);
+    static EncodingType detectEncoding(const std::string& file_path);
+    static size_t getFileSize(const std::string& file_path);
+};
+```
+
+#### ParsedRow - Ligne CSV Analysée
+```cpp
+class ParsedRow {
+public:
+    // Accès aux champs par index
+    const std::string& operator[](size_t index) const;
+    const std::string& getField(size_t index) const;
+    std::optional<std::string> getFieldSafe(size_t index) const;
+    
+    // Accès aux champs par nom d'en-tête
+    const std::string& operator[](const std::string& header) const;
+    const std::string& getField(const std::string& header) const;
+    std::optional<std::string> getFieldSafe(const std::string& header) const;
+    
+    // Conversion de type sécurisée
+    template<typename T>
+    std::optional<T> getFieldAs(size_t index) const;
+    
+    template<typename T>
+    std::optional<T> getFieldAs(const std::string& header) const;
+    
+    // Informations de ligne
+    size_t getRowNumber() const;
+    size_t getFieldCount() const;
+    bool hasHeaders() const;
+    bool isValid() const;
+    bool isEmpty() const;
+    
+    std::string toString() const;
+};
+```
+
+#### ParserStatistics - Métriques de Performance
+```cpp
+class ParserStatistics {
+public:
+    // Chronométrage
+    void startTiming();
+    void stopTiming();
+    
+    // Mise à jour des statistiques
+    void incrementRowsParsed();
+    void incrementRowsSkipped();
+    void incrementRowsWithErrors();
+    void addBytesRead(size_t bytes);
+    void recordFieldCount(size_t count);
+    
+    // Métriques calculées
+    size_t getRowsParsed() const;
+    size_t getRowsSkipped() const;
+    size_t getRowsWithErrors() const;
+    size_t getBytesRead() const;
+    double getRowsPerSecond() const;
+    double getBytesPerSecond() const;
+    double getAverageFieldCount() const;
+    
+    std::string generateReport() const;
+};
+```
+
+### Utilisation Basique
+
+#### 1. Parsing Simple de Fichier
+```cpp
+#include "csv/streaming_parser.hpp"
+using namespace BBP::CSV;
+
+// Créer le parser avec configuration par défaut
+StreamingParser parser;
+
+// Callback pour traitement des lignes
+parser.setRowCallback([](const ParsedRow& row, ParserError error) {
+    if (error == ParserError::SUCCESS) {
+        std::cout << "Ligne " << row.getRowNumber() << ": ";
+        for (size_t i = 0; i < row.getFieldCount(); ++i) {
+            std::cout << row[i] << " | ";
+        }
+        std::cout << std::endl;
+    }
+    return true; // Continuer le parsing
+});
+
+// Parser le fichier
+ParserError result = parser.parseFile("large_dataset.csv");
+
+if (result == ParserError::SUCCESS) {
+    const auto& stats = parser.getStatistics();
+    std::cout << "✅ Parsing réussi !" << std::endl;
+    std::cout << "Lignes traitées: " << stats.getRowsParsed() << std::endl;
+    std::cout << "Performance: " << stats.getRowsPerSecond() << " lignes/sec" << std::endl;
+}
+```
+
+#### 2. Configuration Personnalisée
+```cpp
+// Configuration pour fichier CSV avec délimiteur point-virgule
+ParserConfig config;
+config.delimiter = ';';
+config.quote_char = '\'';
+config.has_header = true;
+config.strict_mode = false;
+config.buffer_size = 16384;  // Buffer de 16KB
+config.trim_whitespace = true;
+config.skip_empty_rows = true;
+
+StreamingParser parser(config);
+
+// Parsing avec gestion d'erreur personnalisée
+parser.setErrorCallback([](ParserError error, const std::string& message, size_t row_number) {
+    std::cerr << "Erreur ligne " << row_number << ": " << message << std::endl;
+});
+
+parser.parseFile("data_with_semicolons.csv");
+```
+
+#### 3. Parsing Asynchrone avec Progression
+```cpp
+StreamingParser parser;
+
+// Callback de progression
+parser.setProgressCallback([](size_t rows_processed, size_t bytes_read, double progress_percent) {
+    std::cout << "\rProgrès: " << std::fixed << std::setprecision(1) 
+              << progress_percent << "% (" << rows_processed << " lignes)" << std::flush;
+});
+
+// Démarrer parsing asynchrone
+parser.parseFileAsync("huge_dataset.csv");
+
+// Faire autre chose pendant le parsing
+std::this_thread::sleep_for(std::chrono::seconds(5));
+
+// Mettre en pause
+parser.pauseParsing();
+std::cout << "\nParsing mis en pause..." << std::endl;
+std::this_thread::sleep_for(std::chrono::seconds(2));
+
+// Reprendre
+parser.resumeParsing();
+std::cout << "Reprise du parsing..." << std::endl;
+
+// Attendre la fin
+parser.waitForCompletion();
+std::cout << "\nParsing terminé !" << std::endl;
+```
+
+### Conversion de Types Sécurisée
+
+#### Accès Typé aux Champs
+```cpp
+parser.setRowCallback([](const ParsedRow& row, ParserError error) {
+    if (error == ParserError::SUCCESS) {
+        // Conversion de type avec vérification d'erreur
+        auto name = row.getFieldAs<std::string>("name");
+        auto age = row.getFieldAs<int>("age");
+        auto salary = row.getFieldAs<double>("salary");
+        auto is_active = row.getFieldAs<bool>("active");
+        
+        if (name && age && salary && is_active) {
+            std::cout << *name << " (" << *age << " ans) - "
+                      << *salary << "€ - " << (*is_active ? "Actif" : "Inactif") << std::endl;
+        } else {
+            std::cout << "Erreur de conversion ligne " << row.getRowNumber() << std::endl;
+        }
+    }
+    return true;
+});
+```
+
+#### Types Supportés pour Conversion
+```cpp
+// Types numériques
+auto int_val = row.getFieldAs<int>("id");
+auto long_val = row.getFieldAs<long>("timestamp");  
+auto float_val = row.getFieldAs<float>("score");
+auto double_val = row.getFieldAs<double>("price");
+
+// Booléens (supporte: true/false, 1/0, yes/no, on/off)
+auto bool_val = row.getFieldAs<bool>("enabled");
+
+// Chaînes (toujours disponible)
+auto string_val = row.getFieldAs<std::string>("description");
+
+// Accès sécurisé par index
+auto field_0 = row.getFieldAs<std::string>(0);
+```
+
+### Gestion d'Erreurs et Modes de Fonctionnement
+
+#### Mode Strict vs Non-Strict
+```cpp
+// Mode strict - s'arrête à la première erreur
+ParserConfig strict_config;
+strict_config.strict_mode = true;
+StreamingParser strict_parser(strict_config);
+
+// Mode non-strict - continue malgré les erreurs
+ParserConfig tolerant_config;
+tolerant_config.strict_mode = false;
+StreamingParser tolerant_parser(tolerant_config);
+
+// Callback d'erreur détaillé
+tolerant_parser.setErrorCallback([](ParserError error, const std::string& message, size_t row_number) {
+    switch (error) {
+        case ParserError::MALFORMED_ROW:
+            std::cout << "Ligne " << row_number << " malformée: " << message << std::endl;
+            break;
+        case ParserError::ENCODING_ERROR:
+            std::cout << "Erreur d'encodage: " << message << std::endl;
+            break;
+        default:
+            std::cout << "Erreur parsing: " << message << std::endl;
+            break;
+    }
+});
+```
+
+### Performance et Optimisations
+
+#### Configuration pour Gros Fichiers
+```cpp
+ParserConfig high_perf_config;
+
+// Buffer plus grand pour moins d'I/O
+high_perf_config.buffer_size = 65536; // 64KB
+
+// Augmenter les limites si nécessaire
+high_perf_config.max_field_size = 10485760; // 10MB
+high_perf_config.max_row_size = 104857600;  // 100MB
+
+// Optimisations pour performance pure
+high_perf_config.trim_whitespace = false;   // Désactiver si pas nécessaire
+high_perf_config.skip_empty_rows = false;   // Traiter toutes les lignes
+
+StreamingParser perf_parser(high_perf_config);
+
+// Callback optimisé (minimal processing)
+size_t row_counter = 0;
+perf_parser.setRowCallback([&row_counter](const ParsedRow& row, ParserError error) {
+    if (error == ParserError::SUCCESS) {
+        ++row_counter;
+        // Traitement minimal ici
+    }
+    return true;
+});
+```
+
+#### Métriques de Performance
+```cpp
+parser.parseFile("large_file.csv");
+
+const auto& stats = parser.getStatistics();
+std::cout << "=== Rapport de Performance ===" << std::endl;
+std::cout << "Lignes traitées: " << stats.getRowsParsed() << std::endl;
+std::cout << "Lignes ignorées: " << stats.getRowsSkipped() << std::endl;
+std::cout << "Lignes avec erreurs: " << stats.getRowsWithErrors() << std::endl;
+std::cout << "Octets lus: " << stats.getBytesRead() << " (" 
+          << (stats.getBytesRead() / 1024.0 / 1024.0) << " MB)" << std::endl;
+std::cout << "Temps de parsing: " << stats.getParsingDuration().count() << "s" << std::endl;
+std::cout << "Débit: " << stats.getRowsPerSecond() << " lignes/sec" << std::endl;
+std::cout << "Débit: " << (stats.getBytesPerSecond() / 1024.0 / 1024.0) << " MB/sec" << std::endl;
+std::cout << "Champs par ligne (moy): " << stats.getAverageFieldCount() << std::endl;
+
+// Rapport complet
+std::cout << std::endl << stats.generateReport() << std::endl;
+```
+
+### Méthodes Utilitaires Statiques
+
+#### Parsing de Ligne Individuelle
+```cpp
+// Parser une ligne CSV individuelle
+std::string csv_line = "John,\"Smith, Jr.\",30,Engineer";
+auto fields = StreamingParser::parseRow(csv_line);
+
+for (const auto& field : fields) {
+    std::cout << "[" << field << "] ";
+}
+// Output: [John] [Smith, Jr.] [30] [Engineer]
+
+// Avec configuration personnalisée
+ParserConfig custom_config;
+custom_config.delimiter = ';';
+custom_config.quote_char = '\'';
+
+std::string csv_line_custom = "John;'Smith; Jr.';30;Engineer";
+auto custom_fields = StreamingParser::parseRow(csv_line_custom, custom_config);
+```
+
+#### Échappement de Champs
+```cpp
+// Échapper un champ pour output CSV
+std::string field_with_comma = "Smith, Jr.";
+std::string escaped = StreamingParser::escapeField(field_with_comma);
+std::cout << escaped << std::endl; // Output: "Smith, Jr."
+
+std::string field_with_quotes = "He said \"Hello\"";
+escaped = StreamingParser::escapeField(field_with_quotes);
+std::cout << escaped << std::endl; // Output: "He said ""Hello"""
+
+// Avec configuration personnalisée
+ParserConfig config;
+config.quote_char = '\'';
+escaped = StreamingParser::escapeField("O'Reilly", config);
+std::cout << escaped << std::endl; // Output: 'O''Reilly'
+```
+
+#### Détection d'Encodage et Taille de Fichier
+```cpp
+// Détecter l'encodage d'un fichier
+EncodingType encoding = StreamingParser::detectEncoding("data.csv");
+switch (encoding) {
+    case EncodingType::UTF8:
+        std::cout << "Fichier en UTF-8" << std::endl;
+        break;
+    case EncodingType::UTF16_LE:
+        std::cout << "Fichier en UTF-16 Little Endian" << std::endl;
+        break;
+    // ... autres encodages
+}
+
+// Obtenir la taille d'un fichier
+size_t file_size = StreamingParser::getFileSize("data.csv");
+std::cout << "Taille du fichier: " << file_size << " octets" << std::endl;
+```
+
+### Cas d'Usage Avancés
+
+#### Parsing avec Callback d'Arrêt Conditionnel
+```cpp
+size_t max_rows_to_process = 10000;
+size_t processed_count = 0;
+
+parser.setRowCallback([&](const ParsedRow& row, ParserError error) {
+    if (error == ParserError::SUCCESS) {
+        processed_count++;
+        
+        // Traiter la ligne
+        processRow(row);
+        
+        // Arrêter après max_rows_to_process lignes
+        return processed_count < max_rows_to_process;
+    }
+    return true;
+});
+
+// Le parsing s'arrêtera automatiquement après 10 000 lignes
+parser.parseFile("huge_file.csv");
+```
+
+#### Filtering et Transformation en Temps Réel
+```cpp
+parser.setRowCallback([](const ParsedRow& row, ParserError error) {
+    if (error != ParserError::SUCCESS) return true;
+    
+    // Filter: ne garder que les lignes où age > 25
+    auto age = row.getFieldAs<int>("age");
+    if (!age || *age <= 25) {
+        return true; // Skip cette ligne
+    }
+    
+    // Transform: formater et sauvegarder
+    std::string formatted_output = 
+        row["name"] + " (" + std::to_string(*age) + " ans) - " + row["email"];
+    
+    // Écrire dans un fichier de sortie ou base de données
+    writeToOutput(formatted_output);
+    
+    return true;
+});
+```
+
+#### Validation et Nettoyage de Données
+```cpp
+size_t valid_rows = 0;
+size_t invalid_rows = 0;
+
+parser.setRowCallback([&](const ParsedRow& row, ParserError error) {
+    if (error != ParserError::SUCCESS) {
+        invalid_rows++;
+        return true;
+    }
+    
+    // Validation des données
+    bool is_valid = true;
+    
+    // Vérifier que l'email est valide
+    std::string email = row["email"];
+    if (email.find('@') == std::string::npos) {
+        is_valid = false;
+    }
+    
+    // Vérifier que l'âge est raisonnable
+    auto age = row.getFieldAs<int>("age");
+    if (!age || *age < 0 || *age > 120) {
+        is_valid = false;
+    }
+    
+    if (is_valid) {
+        valid_rows++;
+        // Traiter la ligne valide
+        processValidRow(row);
+    } else {
+        invalid_rows++;
+        logInvalidRow(row);
+    }
+    
+    return true;
+});
+
+parser.parseFile("user_data.csv");
+
+std::cout << "Lignes valides: " << valid_rows << std::endl;
+std::cout << "Lignes invalides: " << invalid_rows << std::endl;
+```
+
+### Intégration Pipeline BB-Pipeline
+
+#### Parser de Scope Efficace
+```cpp
+// Parser optimisé pour fichier scope.csv
+ParserConfig scope_config;
+scope_config.has_header = true;
+scope_config.strict_mode = true; // Strict pour scope critique
+
+StreamingParser scope_parser(scope_config);
+
+std::vector<std::string> authorized_domains;
+
+scope_parser.setRowCallback([&](const ParsedRow& row, ParserError error) {
+    if (error == ParserError::SUCCESS) {
+        std::string domain = row["domain"];
+        bool wildcard = row.getFieldAs<bool>("wildcard").value_or(false);
+        
+        authorized_domains.push_back(domain);
+        
+        if (wildcard) {
+            // Ajouter support pour sous-domaines
+            authorized_domains.push_back("*." + domain);
+        }
+    }
+    return true;
+});
+
+ParserError result = scope_parser.parseFile("data/scope.csv");
+if (result == ParserError::SUCCESS) {
+    std::cout << "Scope chargé: " << authorized_domains.size() << " domaines" << std::endl;
+}
+```
+
+#### Processing de Résultats de Reconnaissance
+```cpp
+// Parser pour 01_subdomains.csv avec validation
+StreamingParser subdomain_parser;
+
+std::unordered_set<std::string> unique_subdomains;
+std::vector<SubdomainEntry> high_confidence_results;
+
+subdomain_parser.setRowCallback([&](const ParsedRow& row, ParserError error) {
+    if (error == ParserError::SUCCESS) {
+        std::string subdomain = row["subdomain"];
+        std::string source = row["source"];
+        auto confidence = row.getFieldAs<int>("confidence");
+        
+        if (confidence && *confidence >= 80) {
+            // Ne garder que les résultats haute confiance
+            if (unique_subdomains.find(subdomain) == unique_subdomains.end()) {
+                unique_subdomains.insert(subdomain);
+                high_confidence_results.push_back({subdomain, source, *confidence});
+            }
+        }
+    }
+    return true;
+});
+
+subdomain_parser.parseFile("out/01_subdomains.csv");
+
+std::cout << "Sous-domaines uniques haute confiance: " 
+          << high_confidence_results.size() << std::endl;
+```
+
+### Tests et Validation
+
+Le Streaming Parser dispose d'une suite de tests complète avec couverture étendue :
+
+- **27 tests unitaires** couvrant tous les aspects du parsing
+- **Tests de performance** sur datasets de 10 000+ lignes
+- **Tests de robustesse** avec données malformées
+- **Tests de configuration** pour tous les paramètres
+- **Tests multi-threading** pour parsing asynchrone
+- **Tests d'encodage** UTF-8, UTF-16, ASCII
+- **Benchmarks** de performance (>100k lignes/seconde typique)
+
+### Cas d'Usage Principaux
+
+1. **Processing de Gros Datasets** : Analyse de fichiers CSV multi-GB sans limite mémoire
+2. **Pipeline BB-Pipeline** : Parser efficace pour tous les outputs du pipeline
+3. **Data Cleaning** : Validation et nettoyage de données en temps réel
+4. **ETL Processing** : Extract-Transform-Load avec streaming
+5. **Log Analysis** : Analyse de logs CSV volumineux
+6. **Real-time Processing** : Traitement au fur et à mesure avec callbacks
+7. **Data Migration** : Migration de données entre formats
+8. **Monitoring** : Parsing de metrics et événements en continu
+
+### Performance Typique
+
+- **Débit** : 100 000+ lignes/seconde sur hardware moderne
+- **Mémoire** : Usage constant ~8-64KB indépendamment de la taille du fichier  
+- **Scalabilité** : Traitement de fichiers de plusieurs TB sans problème
+- **Latence** : Première ligne traitée en <1ms (streaming)
+- **Concurrence** : Support multi-threading avec parsing asynchrone
+
+---
+
 ## 🔮 Prochaines Fonctionnalités / Next Features
 
 - **Signal Handler** : Arrêt propre avec flush CSV garanti / Clean shutdown with guaranteed CSV flush

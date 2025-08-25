@@ -2,7 +2,7 @@ passons à :
 
 ### CSV Engine
 
-- [ ] **Streaming Parser** - Lecture CSV géantes sans chargement mémoire complet
+- [ ] **Batch Writer** - Écriture CSV optimisée avec flush périodique et compression
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

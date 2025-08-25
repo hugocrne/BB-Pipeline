@@ -14,6 +14,7 @@ set(TEST_SOURCES
     test_memory_manager.cpp
     test_error_recovery.cpp
     test_schema_validator.cpp
+    test_streaming_parser.cpp
 )
 
 # --- Create test executables

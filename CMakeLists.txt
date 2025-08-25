@@ -77,6 +77,7 @@ add_library(bbp-core
   src/infrastructure/system/memory_manager.cpp
   src/infrastructure/system/error_recovery.cpp
   src/csv/schema_validator.cpp
+  src/csv/streaming_parser.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL
