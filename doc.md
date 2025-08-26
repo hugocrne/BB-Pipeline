@@ -600,6 +600,242 @@ manager.setDetailedTracking(true);
 
 ---
 
+### 8. 📝 Batch Writer CSV (Batch Writer)
+
+#### Fonctionnalité
+Système d'écriture CSV haute performance avec flush périodique, compression optionnelle, validation de données et support de configuration avancée pour l'optimisation du débit d'écriture.
+
+#### Caractéristiques Techniques
+- **Buffer Intelligent** : Buffer en mémoire avec flush automatique basé sur seuils configurables
+- **Compression** : Support GZIP/ZLIB avec niveaux configurables (1-9)
+- **Validation** : Validation stricte des champs et gestion des caractères spéciaux
+- **Flush Triggers** : Basé sur nombre de lignes, taille buffer, intervalle temps ou mode mixte
+- **Thread Safety** : Accès concurrent sécurisé avec mutex
+- **Statistiques** : Métriques complètes de performance et utilisation
+- **Recovery** : Système de retry avec backoff exponentiel
+
+#### Configuration
+```cpp
+#include "csv/batch_writer.hpp"
+
+using namespace BBP::CSV;
+
+WriterConfig config;
+config.delimiter = ",";
+config.buffer_size = 16384;                    // 16KB buffer
+config.max_rows_in_buffer = 1000;              // Max 1000 lignes
+config.flush_trigger = FlushTrigger::MIXED;     // Flush intelligent
+config.flush_row_threshold = 500;              // Flush tous les 500 lignes
+config.compression = CompressionType::GZIP;    // Compression GZIP
+config.compression_level = 6;                  // Niveau compression
+config.continue_on_error = true;               // Continue sur erreurs non-critiques
+```
+
+#### Utilisation Basique
+```cpp
+BatchWriter writer(config);
+
+// Ouverture fichier
+writer.openFile("output.csv");
+
+// Écriture header
+writer.writeHeader({"Domain", "IP", "Status", "Response_Time"});
+
+// Écriture de données
+CsvRow row;
+row << "example.com" << "192.168.1.1" << "200" << "150ms";
+writer.writeRow(row);
+
+// Ou directement
+writer.writeRow({"test.com", "10.0.0.1", "404", "200ms"});
+
+// Fermeture avec flush final
+writer.closeFile();
+```
+
+#### Écriture Batch Optimisée
+```cpp
+std::vector<CsvRow> batch_data;
+batch_data.reserve(10000);
+
+// Préparation batch
+for (const auto& result : scan_results) {
+    CsvRow row;
+    row << result.domain 
+        << result.ip_address 
+        << std::to_string(result.status_code)
+        << std::to_string(result.response_time);
+    batch_data.push_back(std::move(row));
+}
+
+// Écriture batch optimisée
+writer.writeRows(batch_data);
+```
+
+#### Configuration Avancée avec Compression
+```cpp
+WriterConfig high_performance;
+high_performance.buffer_size = 65536;                       // 64KB buffer
+high_performance.max_rows_in_buffer = 5000;                 // Gros batches
+high_performance.flush_trigger = FlushTrigger::BUFFER_SIZE; // Flush par taille
+high_performance.flush_size_threshold = 32768;              // Flush à 32KB
+high_performance.compression = CompressionType::GZIP;       // Compression
+high_performance.compression_level = 1;                     // Compression rapide
+high_performance.create_backup = true;                      // Backup automatique
+
+BatchWriter writer(high_performance);
+writer.enableAutoFlush(true);  // Flush automatique en arrière-plan
+```
+
+#### Validation et Gestion d'Erreurs
+```cpp
+WriterConfig strict_config;
+strict_config.max_field_size = 1024;           // Limite taille champ
+strict_config.continue_on_error = false;       // Arrêt sur erreur
+strict_config.max_retry_attempts = 3;          // 3 tentatives max
+strict_config.retry_delay = std::chrono::milliseconds(100);
+
+BatchWriter writer(strict_config);
+
+// Configuration callbacks
+writer.setErrorCallback([](WriterError error, const std::string& message) {
+    logger.error("batch_writer", "Erreur: " + message);
+});
+
+writer.setProgressCallback([](size_t rows_written, double progress) {
+    logger.info("progress", "Écrit " + std::to_string(rows_written) + " lignes");
+});
+```
+
+#### Statistiques et Performance
+```cpp
+// Écriture de données...
+writer.writeRows(large_dataset);
+writer.closeFile();
+
+// Récupération statistiques
+auto stats = writer.getStatistics();
+
+std::cout << "=== Statistiques BatchWriter ===\n"
+          << "Lignes écrites: " << stats.getRowsWritten() << "\n"
+          << "Octets écrits: " << stats.getBytesWritten() << "\n"
+          << "Débit: " << stats.getRowsPerSecond() << " lignes/sec\n"
+          << "Bande passante: " << (stats.getBytesPerSecond() / 1024.0 / 1024.0) << " MB/s\n"
+          << "Ratio compression: " << (stats.getCompressionRatio() * 100.0) << "%\n"
+          << "Nb flush: " << stats.getFlushCount() << "\n"
+          << "Temps moyen flush: " << stats.getAverageFlushTime() << "s\n";
+
+// Rapport détaillé
+std::string report = stats.generateReport();
+logger.info("batch_writer", report);
+```
+
+#### Cas d'Usage Spécialisés
+```cpp
+// Stream externe (pour tests ou redirection)
+std::ostringstream memory_stream;
+writer.openStream(memory_stream);
+writer.writeRows(test_data);
+std::string csv_content = memory_stream.str();
+
+// Configuration pour très gros fichiers
+WriterConfig massive_config;
+massive_config.buffer_size = 1024 * 1024;      // 1MB buffer
+massive_config.flush_trigger = FlushTrigger::TIME_INTERVAL;
+massive_config.flush_interval = std::chrono::seconds(30);  // Flush toutes les 30s
+massive_config.compression = CompressionType::GZIP;
+massive_config.compression_level = 9;          // Compression maximale
+
+// Configuration pour données temps réel
+WriterConfig realtime_config;
+realtime_config.flush_trigger = FlushTrigger::ROW_COUNT;
+realtime_config.flush_row_threshold = 1;       // Flush immédiat
+realtime_config.buffer_size = 1024;            // Petit buffer
+```
+
+#### Gestion des Caractères Spéciaux
+```cpp
+// Configuration pour données complexes
+WriterConfig complex_config;
+complex_config.always_quote = true;            // Quote tous les champs
+complex_config.quote_empty_fields = true;      // Quote champs vides
+complex_config.escape_char = '"';              // Caractère d'échappement
+complex_config.line_ending = "\r\n";          // Windows line ending
+complex_config.write_bom = true;              // BOM UTF-8
+complex_config.encoding = "UTF-8";            // Encodage explicite
+
+BatchWriter writer(complex_config);
+
+// Écriture de données avec caractères spéciaux
+writer.writeRow({"field,with,commas", "field\"with\"quotes", "field\nwith\nnewlines"});
+// Sortie: "field,with,commas","field""with""quotes","field\nwith\nnewlines"
+```
+
+#### Intégration avec Pipeline BB
+```cpp
+// Utilisation typique dans module BB-Pipeline
+class CsvOutputModule {
+private:
+    BatchWriter writer_;
+    WriterConfig config_;
+
+public:
+    bool initialize(const std::string& output_file) {
+        // Configuration optimisée pour pipeline
+        config_.buffer_size = 32768;                    // 32KB buffer
+        config_.max_rows_in_buffer = 2000;              // 2000 lignes max
+        config_.flush_trigger = FlushTrigger::MIXED;     // Triggers multiples
+        config_.flush_row_threshold = 1000;             // Flush 1000 lignes
+        config_.flush_size_threshold = 16384;           // Flush 16KB
+        config_.compression = CompressionType::GZIP;    // Compression
+        config_.compression_level = 6;                  // Équilibre vitesse/taille
+        config_.create_backup = true;                   // Sauvegarde
+        
+        writer_.setConfig(config_);
+        return writer_.openFile(output_file) == WriterError::SUCCESS;
+    }
+    
+    void writeResults(const std::vector<ScanResult>& results) {
+        std::vector<CsvRow> rows;
+        rows.reserve(results.size());
+        
+        for (const auto& result : results) {
+            CsvRow row;
+            row << result.domain
+                << result.subdomain
+                << result.ip_address
+                << std::to_string(result.port)
+                << result.service
+                << result.status
+                << std::to_string(result.response_time)
+                << result.server_header
+                << result.title;
+            rows.push_back(std::move(row));
+        }
+        
+        writer_.writeRows(rows);
+    }
+};
+```
+
+#### Métriques et Monitoring
+- **Performance** : Débit en lignes/seconde et MB/seconde
+- **Buffer** : Utilisation moyenne et pics de buffer
+- **Compression** : Ratio et temps de compression
+- **Erreurs** : Compteurs par type d'erreur
+- **I/O** : Statistiques flush et écriture disque
+- **Memory** : Utilisation mémoire et optimisations
+
+#### Cas d'Usage Pipeline
+- **Output Modules** : Écriture optimisée résultats de scan
+- **Data Export** : Export batch de données avec compression
+- **Real-time Logging** : Écriture temps réel avec flush immédiat
+- **Backup Generation** : Sauvegarde incrémentale avec compression
+- **Performance Analysis** : Écriture métriques haute fréquence
+- **Large Datasets** : Gestion fichiers CSV massifs (>1GB)
+
+---
+
 ## Error Recovery - Auto-retry avec Exponential Backoff
 
 Le système **Error Recovery** de BB-Pipeline implémente une stratégie de récupération d'erreurs sophistiquée avec retry automatique et backoff exponentiel. Ce composant est essentiel pour la robustesse des opérations réseau et la fiabilité générale du framework.
