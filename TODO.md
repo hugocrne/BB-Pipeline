@@ -19,7 +19,7 @@
 - [x] **Streaming Parser** - Lecture CSV géantes sans chargement mémoire complet ✅
 - [x] **Batch Writer** - Écriture CSV optimisée avec flush périodique et compression ✅
 - [x] **Merger Engine** - Fusion intelligente de CSV multiples avec déduplication ✅
-- [ ] **Delta Compression** - Optimisation stockage pour change monitoring
+- [x] **Delta Compression** - Optimisation stockage pour change monitoring ✅
 - [ ] **Query Engine** - SQL-like sur CSV avec indexation rapide
 
 ### Orchestrateur (bbpctl)

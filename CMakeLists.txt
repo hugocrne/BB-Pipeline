@@ -80,6 +80,7 @@ add_library(bbp-core
   src/csv/streaming_parser.cpp
   src/csv/batch_writer.cpp
   src/csv/merger_engine.cpp
+  src/csv/delta_compression.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL

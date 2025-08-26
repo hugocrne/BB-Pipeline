@@ -2,7 +2,7 @@ passons à :
 
 ### CSV Engine
 
-- [ ] **Merger Engine** - Fusion intelligente de CSV multiples avec déduplication
+- [ ] **Delta Compression** - Optimisation stockage pour change monitoring
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel
