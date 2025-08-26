@@ -2,7 +2,7 @@ passons à :
 
 ### CSV Engine
 
-- [ ] **Batch Writer** - Écriture CSV optimisée avec flush périodique et compression
+- [ ] **Merger Engine** - Fusion intelligente de CSV multiples avec déduplication
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

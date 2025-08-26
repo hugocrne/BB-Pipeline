@@ -836,6 +836,301 @@ public:
 
 ---
 
+### 9. 🔀 Merger Engine CSV (Moteur de Fusion)
+
+#### Fonctionnalité
+Système de fusion intelligente de fichiers CSV multiples avec déduplication avancée, résolution de conflits et gestion de schémas. Le Merger Engine permet de combiner des données provenant de différentes sources en un fichier unifié avec des stratégies de merge configurables.
+
+#### Caractéristiques Techniques
+- **Stratégies de Fusion** : APPEND, SMART_MERGE, PRIORITY_MERGE, TIME_BASED, SCHEMA_AWARE
+- **Déduplication** : EXACT_MATCH, FUZZY_MATCH, KEY_BASED, CONTENT_HASH, CUSTOM_FUNCTION
+- **Résolution de Conflits** : KEEP_FIRST, KEEP_LAST, KEEP_NEWEST, MERGE_VALUES, PRIORITY_SOURCE
+- **Thread-Safety** : Statistiques atomiques et opérations thread-safe
+- **Algorithmes** : Distance de Levenshtein, Similarité de Jaccard pour fuzzy matching
+- **Gestion Mémoire** : Architecture optimisée pour traitement de gros volumes
+- **Schema Inference** : Détection automatique et unification des schémas CSV
+
+#### Configuration de Base
+```cpp
+#include "csv/merger_engine.hpp"
+
+using namespace bbp::csv;
+
+// Configuration de fusion intelligente
+MergeConfig config;
+config.strategy = MergeStrategy::SMART_MERGE;
+config.deduplication = DeduplicationStrategy::KEY_BASED;
+config.key_columns = {"id", "domain"};
+config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+config.time_column = "timestamp";
+config.fuzzy_threshold = 0.85;
+config.preserve_order = true;
+
+// Sources avec priorités
+std::vector<InputSource> sources = {
+    {"data/subdomains.csv", 3},    // Priorité haute
+    {"data/probes.csv", 2},        // Priorité moyenne
+    {"data/discovery.csv", 1}      // Priorité basse
+};
+
+MergerEngine engine(config);
+```
+
+#### Fusion par Stratégies
+
+**Stratégie APPEND (Simple)**
+```cpp
+MergeConfig append_config;
+append_config.strategy = MergeStrategy::APPEND;
+append_config.include_headers = true;
+
+// Concatène tous les fichiers sans déduplication
+MergerEngine engine(append_config);
+std::ofstream output("merged_append.csv");
+auto result = engine.merge(sources, output);
+```
+
+**Stratégie SMART_MERGE (Intelligente)**
+```cpp
+MergeConfig smart_config;
+smart_config.strategy = MergeStrategy::SMART_MERGE;
+smart_config.deduplication = DeduplicationStrategy::FUZZY_MATCH;
+smart_config.fuzzy_threshold = 0.8;
+smart_config.conflict_resolution = ConflictResolution::MERGE_VALUES;
+
+// Fusion avec déduplication fuzzy et merge des valeurs
+MergerEngine engine(smart_config);
+std::ofstream output("merged_smart.csv");
+auto result = engine.merge(sources, output);
+```
+
+**Stratégie PRIORITY_MERGE (Par Priorité)**
+```cpp
+MergeConfig priority_config;
+priority_config.strategy = MergeStrategy::PRIORITY_MERGE;
+priority_config.deduplication = DeduplicationStrategy::KEY_BASED;
+priority_config.key_columns = {"domain", "subdomain"};
+priority_config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+
+// Les sources avec priorité plus élevée écrasent les autres
+std::vector<InputSource> priority_sources = {
+    {"high_quality.csv", 5},    // Données haute qualité
+    {"medium_quality.csv", 3},  // Données qualité moyenne
+    {"low_quality.csv", 1}      // Données qualité basse
+};
+
+MergerEngine engine(priority_config);
+```
+
+**Stratégie TIME_BASED (Temporelle)**
+```cpp
+MergeConfig time_config;
+time_config.strategy = MergeStrategy::TIME_BASED;
+time_config.deduplication = DeduplicationStrategy::KEY_BASED;
+time_config.key_columns = {"url"};
+time_config.time_column = "last_seen";
+time_config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+
+// Garde automatiquement les enregistrements les plus récents
+MergerEngine engine(time_config);
+```
+
+**Stratégie SCHEMA_AWARE (Unification de Schéma)**
+```cpp
+MergeConfig schema_config;
+schema_config.strategy = MergeStrategy::SCHEMA_AWARE;
+schema_config.preserve_order = false;
+schema_config.include_headers = true;
+
+// Unifie automatiquement les différents schémas CSV
+// Fichier 1: id,name,email
+// Fichier 2: id,name,phone
+// Résultat: id,name,email,phone (avec champs vides où nécessaire)
+MergerEngine engine(schema_config);
+```
+
+#### Déduplication Avancée
+
+**Déduplication par Clés**
+```cpp
+MergeConfig dedup_config;
+dedup_config.deduplication = DeduplicationStrategy::KEY_BASED;
+dedup_config.key_columns = {"domain", "subdomain"};
+
+// Supprime les doublons basés sur combinaison de colonnes
+```
+
+**Déduplication Fuzzy (Approximative)**
+```cpp
+MergeConfig fuzzy_config;
+fuzzy_config.deduplication = DeduplicationStrategy::FUZZY_MATCH;
+fuzzy_config.fuzzy_threshold = 0.85; // 85% de similarité
+
+// Utilise distance de Levenshtein et Jaccard pour détecter similarité
+// "www.example.com" et "www.exemple.com" seraient considérés similaires
+```
+
+**Déduplication par Hash**
+```cpp
+MergeConfig hash_config;
+hash_config.deduplication = DeduplicationStrategy::CONTENT_HASH;
+
+// Calcule un hash SHA-256 du contenu complet de chaque ligne
+// Détection exacte des doublons même avec réorganisation des champs
+```
+
+**Déduplication Personnalisée**
+```cpp
+MergeConfig custom_config;
+custom_config.deduplication = DeduplicationStrategy::CUSTOM_FUNCTION;
+custom_config.custom_comparator = [](const std::vector<std::string>& row1,
+                                     const std::vector<std::string>& row2) -> bool {
+    // Logique personnalisée de comparaison
+    return row1[0] == row2[0] && row1[1].substr(0, 10) == row2[1].substr(0, 10);
+};
+```
+
+#### Résolution de Conflits
+
+```cpp
+// Garde le premier enregistrement trouvé
+config.conflict_resolution = ConflictResolution::KEEP_FIRST;
+
+// Garde le dernier enregistrement trouvé
+config.conflict_resolution = ConflictResolution::KEEP_LAST;
+
+// Garde l'enregistrement le plus récent (nécessite time_column)
+config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+
+// Fusionne les valeurs de tous les enregistrements
+config.conflict_resolution = ConflictResolution::MERGE_VALUES;
+
+// Utilise la priorité de la source
+config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+```
+
+#### Statistiques et Monitoring
+
+```cpp
+MergerEngine engine(config);
+auto result = engine.merge(sources, output);
+
+const auto& stats = engine.getStatistics();
+std::cout << "=== Statistiques Merger Engine ===\n"
+          << "Sources traitées: " << stats.getSourcesProcessed() << "\n"
+          << "Lignes totales: " << stats.getTotalRows() << "\n"
+          << "Doublons trouvés: " << stats.getDuplicatesFound() << "\n"
+          << "Doublons supprimés: " << stats.getDuplicatesRemoved() << "\n"
+          << "Conflits résolus: " << stats.getConflictsResolved() << "\n"
+          << "Erreurs: " << stats.getErrorsEncountered() << "\n";
+```
+
+#### Gestion d'Erreurs
+
+```cpp
+auto result = engine.merge(sources, output);
+
+switch (result) {
+    case MergeError::SUCCESS:
+        std::cout << "Fusion réussie\n";
+        break;
+    case MergeError::FILE_NOT_FOUND:
+        std::cerr << "Fichier source introuvable\n";
+        break;
+    case MergeError::INVALID_CONFIG:
+        std::cerr << "Configuration invalide\n";
+        break;
+    case MergeError::PARSE_ERROR:
+        std::cerr << "Erreur de parsing CSV\n";
+        break;
+    case MergeError::WRITE_ERROR:
+        std::cerr << "Erreur d'écriture\n";
+        break;
+    case MergeError::MEMORY_ERROR:
+        std::cerr << "Erreur de mémoire\n";
+        break;
+}
+```
+
+#### Cas d'Usage Pipeline
+
+**Fusion Multi-Sources Reconnaissance**
+```cpp
+// Pipeline complet de reconnaissance
+std::vector<InputSource> recon_sources = {
+    {"01_subdomains.csv", 5},     // Sous-domaines (priorité max)
+    {"02_probe.csv", 4},          // Probing HTTP (haute priorité)
+    {"03_headless.csv", 3},       // Analyse headless
+    {"04_discovery.csv", 2},      // Discovery/bruteforce
+    {"05_jsintel.csv", 1}         // JavaScript intelligence
+};
+
+MergeConfig recon_config;
+recon_config.strategy = MergeStrategy::SCHEMA_AWARE;
+recon_config.deduplication = DeduplicationStrategy::KEY_BASED;
+recon_config.key_columns = {"url", "domain"};
+recon_config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+
+MergerEngine engine(recon_config);
+std::ofstream final_output("99_final_merged.csv");
+auto result = engine.merge(recon_sources, final_output);
+```
+
+**Déduplication Temporelle**
+```cpp
+// Merge de données avec timestamps pour garder les plus récentes
+MergeConfig temporal_config;
+temporal_config.strategy = MergeStrategy::TIME_BASED;
+temporal_config.deduplication = DeduplicationStrategy::KEY_BASED;
+temporal_config.key_columns = {"target", "endpoint"};
+temporal_config.time_column = "scan_timestamp";
+temporal_config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+
+// Garde automatiquement la version la plus récente de chaque endpoint
+```
+
+**Fusion avec Validation de Qualité**
+```cpp
+// Fusion avec priorité basée sur la qualité des données
+std::vector<InputSource> quality_sources = {
+    {"manual_recon.csv", 10},     // Reconnaissance manuelle (qualité max)
+    {"automated_scan.csv", 5},    // Scan automatisé
+    {"passive_dns.csv", 3},       // DNS passif
+    {"web_crawl.csv", 1}          // Web crawling
+};
+
+MergeConfig quality_config;
+quality_config.strategy = MergeStrategy::PRIORITY_MERGE;
+quality_config.deduplication = DeduplicationStrategy::FUZZY_MATCH;
+quality_config.fuzzy_threshold = 0.9; // Seuil élevé pour qualité
+quality_config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+```
+
+#### Performance et Optimisations
+
+- **Streaming Processing** : Traitement par chunks pour gros fichiers
+- **Memory Mapping** : Utilisation mmap() pour fichiers volumineux
+- **Thread-Safe Statistics** : Compteurs atomiques sans locks
+- **Smart Buffering** : Buffer adaptatif selon taille données
+- **Hash Optimization** : Cache des hash pour déduplication rapide
+- **Schema Caching** : Mise en cache des schémas détectés
+
+#### Métriques de Performance
+- **Throughput** : Lignes traitées par seconde
+- **Memory Usage** : Utilisation mémoire pic et moyenne
+- **Dedup Efficiency** : Ratio de déduplication atteint
+- **Merge Speed** : Vitesse de fusion multi-sources
+- **I/O Performance** : Lecture/écriture disque optimisée
+
+#### Intégration BB-Pipeline
+- **Module Aggregator** : Fusion finale de tous les résultats pipeline
+- **Incremental Updates** : Fusion incrémentale de nouveaux scans
+- **Quality Assurance** : Validation qualité données fusionnées
+- **Historical Merging** : Fusion données historiques avec nouvelles
+- **Multi-Target Support** : Fusion données multi-cibles/domaines
+
+---
+
 ## Error Recovery - Auto-retry avec Exponential Backoff
 
 Le système **Error Recovery** de BB-Pipeline implémente une stratégie de récupération d'erreurs sophistiquée avec retry automatique et backoff exponentiel. Ce composant est essentiel pour la robustesse des opérations réseau et la fiabilité générale du framework.
@@ -2981,6 +3276,301 @@ Le Streaming Parser dispose d'une suite de tests complète avec couverture éten
 - **Scalabilité** : Traitement de fichiers de plusieurs TB sans problème
 - **Latence** : Première ligne traitée en <1ms (streaming)
 - **Concurrence** : Support multi-threading avec parsing asynchrone
+
+---
+
+### 9. 🔀 CSV Merger Engine (Intelligent Fusion System)
+
+#### Functionality
+Intelligent CSV file merging system with advanced deduplication, conflict resolution, and schema management. The Merger Engine allows combining data from multiple sources into a unified file with configurable merge strategies.
+
+#### Technical Characteristics
+- **Merge Strategies**: APPEND, SMART_MERGE, PRIORITY_MERGE, TIME_BASED, SCHEMA_AWARE
+- **Deduplication**: EXACT_MATCH, FUZZY_MATCH, KEY_BASED, CONTENT_HASH, CUSTOM_FUNCTION
+- **Conflict Resolution**: KEEP_FIRST, KEEP_LAST, KEEP_NEWEST, MERGE_VALUES, PRIORITY_SOURCE
+- **Thread-Safety**: Atomic statistics and thread-safe operations
+- **Algorithms**: Levenshtein distance, Jaccard similarity for fuzzy matching
+- **Memory Management**: Architecture optimized for large volume processing
+- **Schema Inference**: Automatic detection and unification of CSV schemas
+
+#### Basic Configuration
+```cpp
+#include "csv/merger_engine.hpp"
+
+using namespace bbp::csv;
+
+// Smart merge configuration
+MergeConfig config;
+config.strategy = MergeStrategy::SMART_MERGE;
+config.deduplication = DeduplicationStrategy::KEY_BASED;
+config.key_columns = {"id", "domain"};
+config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+config.time_column = "timestamp";
+config.fuzzy_threshold = 0.85;
+config.preserve_order = true;
+
+// Sources with priorities
+std::vector<InputSource> sources = {
+    {"data/subdomains.csv", 3},    // High priority
+    {"data/probes.csv", 2},        // Medium priority
+    {"data/discovery.csv", 1}      // Low priority
+};
+
+MergerEngine engine(config);
+```
+
+#### Strategy-Based Merging
+
+**APPEND Strategy (Simple)**
+```cpp
+MergeConfig append_config;
+append_config.strategy = MergeStrategy::APPEND;
+append_config.include_headers = true;
+
+// Concatenates all files without deduplication
+MergerEngine engine(append_config);
+std::ofstream output("merged_append.csv");
+auto result = engine.merge(sources, output);
+```
+
+**SMART_MERGE Strategy (Intelligent)**
+```cpp
+MergeConfig smart_config;
+smart_config.strategy = MergeStrategy::SMART_MERGE;
+smart_config.deduplication = DeduplicationStrategy::FUZZY_MATCH;
+smart_config.fuzzy_threshold = 0.8;
+smart_config.conflict_resolution = ConflictResolution::MERGE_VALUES;
+
+// Merge with fuzzy deduplication and value merging
+MergerEngine engine(smart_config);
+std::ofstream output("merged_smart.csv");
+auto result = engine.merge(sources, output);
+```
+
+**PRIORITY_MERGE Strategy (Priority-Based)**
+```cpp
+MergeConfig priority_config;
+priority_config.strategy = MergeStrategy::PRIORITY_MERGE;
+priority_config.deduplication = DeduplicationStrategy::KEY_BASED;
+priority_config.key_columns = {"domain", "subdomain"};
+priority_config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+
+// Higher priority sources override others
+std::vector<InputSource> priority_sources = {
+    {"high_quality.csv", 5},    // High quality data
+    {"medium_quality.csv", 3},  // Medium quality data
+    {"low_quality.csv", 1}      // Low quality data
+};
+
+MergerEngine engine(priority_config);
+```
+
+**TIME_BASED Strategy (Temporal)**
+```cpp
+MergeConfig time_config;
+time_config.strategy = MergeStrategy::TIME_BASED;
+time_config.deduplication = DeduplicationStrategy::KEY_BASED;
+time_config.key_columns = {"url"};
+time_config.time_column = "last_seen";
+time_config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+
+// Automatically keeps the most recent records
+MergerEngine engine(time_config);
+```
+
+**SCHEMA_AWARE Strategy (Schema Unification)**
+```cpp
+MergeConfig schema_config;
+schema_config.strategy = MergeStrategy::SCHEMA_AWARE;
+schema_config.preserve_order = false;
+schema_config.include_headers = true;
+
+// Automatically unifies different CSV schemas
+// File 1: id,name,email
+// File 2: id,name,phone
+// Result: id,name,email,phone (with empty fields where necessary)
+MergerEngine engine(schema_config);
+```
+
+#### Advanced Deduplication
+
+**Key-Based Deduplication**
+```cpp
+MergeConfig dedup_config;
+dedup_config.deduplication = DeduplicationStrategy::KEY_BASED;
+dedup_config.key_columns = {"domain", "subdomain"};
+
+// Removes duplicates based on column combination
+```
+
+**Fuzzy Deduplication (Approximate)**
+```cpp
+MergeConfig fuzzy_config;
+fuzzy_config.deduplication = DeduplicationStrategy::FUZZY_MATCH;
+fuzzy_config.fuzzy_threshold = 0.85; // 85% similarity
+
+// Uses Levenshtein distance and Jaccard for similarity detection
+// "www.example.com" and "www.exemple.com" would be considered similar
+```
+
+**Hash-Based Deduplication**
+```cpp
+MergeConfig hash_config;
+hash_config.deduplication = DeduplicationStrategy::CONTENT_HASH;
+
+// Computes SHA-256 hash of complete line content
+// Exact duplicate detection even with field reorganization
+```
+
+**Custom Deduplication**
+```cpp
+MergeConfig custom_config;
+custom_config.deduplication = DeduplicationStrategy::CUSTOM_FUNCTION;
+custom_config.custom_comparator = [](const std::vector<std::string>& row1,
+                                     const std::vector<std::string>& row2) -> bool {
+    // Custom comparison logic
+    return row1[0] == row2[0] && row1[1].substr(0, 10) == row2[1].substr(0, 10);
+};
+```
+
+#### Conflict Resolution
+
+```cpp
+// Keep first record found
+config.conflict_resolution = ConflictResolution::KEEP_FIRST;
+
+// Keep last record found
+config.conflict_resolution = ConflictResolution::KEEP_LAST;
+
+// Keep most recent record (requires time_column)
+config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+
+// Merge values from all records
+config.conflict_resolution = ConflictResolution::MERGE_VALUES;
+
+// Use source priority
+config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+```
+
+#### Statistics and Monitoring
+
+```cpp
+MergerEngine engine(config);
+auto result = engine.merge(sources, output);
+
+const auto& stats = engine.getStatistics();
+std::cout << "=== Merger Engine Statistics ===\n"
+          << "Sources processed: " << stats.getSourcesProcessed() << "\n"
+          << "Total rows: " << stats.getTotalRows() << "\n"
+          << "Duplicates found: " << stats.getDuplicatesFound() << "\n"
+          << "Duplicates removed: " << stats.getDuplicatesRemoved() << "\n"
+          << "Conflicts resolved: " << stats.getConflictsResolved() << "\n"
+          << "Errors: " << stats.getErrorsEncountered() << "\n";
+```
+
+#### Error Handling
+
+```cpp
+auto result = engine.merge(sources, output);
+
+switch (result) {
+    case MergeError::SUCCESS:
+        std::cout << "Merge successful\n";
+        break;
+    case MergeError::FILE_NOT_FOUND:
+        std::cerr << "Source file not found\n";
+        break;
+    case MergeError::INVALID_CONFIG:
+        std::cerr << "Invalid configuration\n";
+        break;
+    case MergeError::PARSE_ERROR:
+        std::cerr << "CSV parsing error\n";
+        break;
+    case MergeError::WRITE_ERROR:
+        std::cerr << "Write error\n";
+        break;
+    case MergeError::MEMORY_ERROR:
+        std::cerr << "Memory error\n";
+        break;
+}
+```
+
+#### Pipeline Use Cases
+
+**Multi-Source Reconnaissance Fusion**
+```cpp
+// Complete reconnaissance pipeline
+std::vector<InputSource> recon_sources = {
+    {"01_subdomains.csv", 5},     // Subdomains (max priority)
+    {"02_probe.csv", 4},          // HTTP probing (high priority)
+    {"03_headless.csv", 3},       // Headless analysis
+    {"04_discovery.csv", 2},      // Discovery/bruteforce
+    {"05_jsintel.csv", 1}         // JavaScript intelligence
+};
+
+MergeConfig recon_config;
+recon_config.strategy = MergeStrategy::SCHEMA_AWARE;
+recon_config.deduplication = DeduplicationStrategy::KEY_BASED;
+recon_config.key_columns = {"url", "domain"};
+recon_config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+
+MergerEngine engine(recon_config);
+std::ofstream final_output("99_final_merged.csv");
+auto result = engine.merge(recon_sources, final_output);
+```
+
+**Temporal Deduplication**
+```cpp
+// Merge data with timestamps to keep most recent
+MergeConfig temporal_config;
+temporal_config.strategy = MergeStrategy::TIME_BASED;
+temporal_config.deduplication = DeduplicationStrategy::KEY_BASED;
+temporal_config.key_columns = {"target", "endpoint"};
+temporal_config.time_column = "scan_timestamp";
+temporal_config.conflict_resolution = ConflictResolution::KEEP_NEWEST;
+
+// Automatically keeps the most recent version of each endpoint
+```
+
+**Quality-Based Fusion**
+```cpp
+// Merge with quality-based priority
+std::vector<InputSource> quality_sources = {
+    {"manual_recon.csv", 10},     // Manual reconnaissance (max quality)
+    {"automated_scan.csv", 5},    // Automated scanning
+    {"passive_dns.csv", 3},       // Passive DNS
+    {"web_crawl.csv", 1}          // Web crawling
+};
+
+MergeConfig quality_config;
+quality_config.strategy = MergeStrategy::PRIORITY_MERGE;
+quality_config.deduplication = DeduplicationStrategy::FUZZY_MATCH;
+quality_config.fuzzy_threshold = 0.9; // High threshold for quality
+quality_config.conflict_resolution = ConflictResolution::PRIORITY_SOURCE;
+```
+
+#### Performance and Optimizations
+
+- **Streaming Processing**: Chunk processing for large files
+- **Memory Mapping**: mmap() usage for huge files
+- **Thread-Safe Statistics**: Lock-free atomic counters
+- **Smart Buffering**: Adaptive buffer based on data size
+- **Hash Optimization**: Hash caching for fast deduplication
+- **Schema Caching**: Detected schema caching
+
+#### Performance Metrics
+- **Throughput**: Rows processed per second
+- **Memory Usage**: Peak and average memory utilization
+- **Dedup Efficiency**: Achieved deduplication ratio
+- **Merge Speed**: Multi-source fusion velocity
+- **I/O Performance**: Optimized disk read/write
+
+#### BB-Pipeline Integration
+- **Aggregator Module**: Final fusion of all pipeline results
+- **Incremental Updates**: Incremental merging of new scans
+- **Quality Assurance**: Quality validation of merged data
+- **Historical Merging**: Historical data fusion with new data
+- **Multi-Target Support**: Multi-target/domain data fusion
 
 ---
 

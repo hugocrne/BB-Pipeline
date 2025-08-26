@@ -44,6 +44,11 @@ add_executable(test_error_recovery_simple test_error_recovery_simple.cpp)
 target_link_libraries(test_error_recovery_simple bbp-core)
 add_test(NAME test_error_recovery_simple COMMAND test_error_recovery_simple)
 
+# --- Merger Engine simple test (without GoogleTest)
+add_executable(test_merger_engine_simple test_merger_engine_simple.cpp)
+target_link_libraries(test_merger_engine_simple bbp-core)
+add_test(NAME test_merger_engine_simple COMMAND test_merger_engine_simple)
+
 # --- Integration test (if main.cpp exists)
 # if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp)
 #     add_executable(test_integration test_integration.cpp)
