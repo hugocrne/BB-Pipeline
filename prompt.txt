@@ -2,7 +2,9 @@ passons à :
 
 ### CSV Engine
 
-- [ ] **Delta Compression** - Optimisation stockage pour change monitoring
+### Orchestrateur (bbpctl)
+
+- [ ] **Pipeline Engine** - Exécution séquentielle/parallèle avec dépendances
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

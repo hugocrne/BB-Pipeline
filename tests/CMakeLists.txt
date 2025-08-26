@@ -17,6 +17,7 @@ set(TEST_SOURCES
     test_streaming_parser.cpp
     test_batch_writer.cpp
     test_delta_compression.cpp
+    test_query_engine.cpp
 )
 
 # --- Create test executables

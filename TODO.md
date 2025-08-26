@@ -20,7 +20,7 @@
 - [x] **Batch Writer** - Écriture CSV optimisée avec flush périodique et compression ✅
 - [x] **Merger Engine** - Fusion intelligente de CSV multiples avec déduplication ✅
 - [x] **Delta Compression** - Optimisation stockage pour change monitoring ✅
-- [ ] **Query Engine** - SQL-like sur CSV avec indexation rapide
+- [x] **Query Engine** - SQL-like sur CSV avec indexation rapide
 
 ### Orchestrateur (bbpctl)
 
