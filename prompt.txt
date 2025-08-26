@@ -1,10 +1,6 @@
 passons à :
 
-### CSV Engine
-
-### Orchestrateur (bbpctl)
-
-- [ ] **Resume System** - Reprise intelligente après crash avec checkpoint
+- [ ] **Dry Run** - Simulation complète sans exécution réelle
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

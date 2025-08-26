@@ -84,6 +84,7 @@ add_library(bbp-core
   src/csv/query_engine.cpp
   src/orchestrator/pipeline_engine.cpp
   src/orchestrator/resume_system.cpp
+  src/orchestrator/dry_run_system.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL

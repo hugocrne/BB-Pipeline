@@ -20,6 +20,7 @@ set(TEST_SOURCES
     test_query_engine.cpp
     test_pipeline_engine.cpp
     test_resume_system.cpp
+    test_dry_run_system.cpp
 )
 
 # --- Create test executables
