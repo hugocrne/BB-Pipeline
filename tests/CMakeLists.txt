@@ -18,6 +18,8 @@ set(TEST_SOURCES
     test_batch_writer.cpp
     test_delta_compression.cpp
     test_query_engine.cpp
+    test_pipeline_engine.cpp
+    test_resume_system.cpp
 )
 
 # --- Create test executables

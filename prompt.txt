@@ -4,7 +4,7 @@ passons à :
 
 ### Orchestrateur (bbpctl)
 
-- [ ] **Pipeline Engine** - Exécution séquentielle/parallèle avec dépendances
+- [ ] **Resume System** - Reprise intelligente après crash avec checkpoint
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

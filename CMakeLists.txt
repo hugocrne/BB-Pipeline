@@ -82,6 +82,8 @@ add_library(bbp-core
   src/csv/merger_engine.cpp
   src/csv/delta_compression.cpp
   src/csv/query_engine.cpp
+  src/orchestrator/pipeline_engine.cpp
+  src/orchestrator/resume_system.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL
