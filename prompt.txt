@@ -1,6 +1,6 @@
 passons à :
 
-- [ ] **Progress Monitor** - Barre progression temps réel avec ETA
+- [ ] **Stage Selector** - Exécution modules individuels avec validation
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

@@ -28,7 +28,7 @@
 - [x] **Resume System** - Reprise intelligente après crash avec checkpoint
 - [x] **Dry Run** - Simulation complète sans exécution réelle ✅
 - [x] **Progress Monitor** - Barre progression temps réel avec ETA ✅
-- [ ] **Resource Monitor** - Surveillance CPU/RAM/réseau avec throttling
+- [x] **Resource Monitor** - Surveillance CPU/RAM/réseau avec throttling ✅
 - [ ] **Stage Selector** - Exécution modules individuels avec validation
 - [ ] **Config Override** - Surcharge parameters via CLI
 - [ ] **Kill Switch** - Arrêt d'urgence propre avec état sauvegardé

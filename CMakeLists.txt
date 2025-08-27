@@ -86,6 +86,7 @@ add_library(bbp-core
   src/orchestrator/resume_system.cpp
   src/orchestrator/dry_run_system.cpp
   src/orchestrator/progress_monitor.cpp
+  src/orchestrator/resource_monitor.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL
