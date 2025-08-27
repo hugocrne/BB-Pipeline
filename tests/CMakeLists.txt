@@ -21,6 +21,7 @@ set(TEST_SOURCES
     test_pipeline_engine.cpp
     test_resume_system.cpp
     test_dry_run_system.cpp
+    test_progress_monitor.cpp
 )
 
 # --- Create test executables

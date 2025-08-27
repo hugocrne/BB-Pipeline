@@ -1,6 +1,6 @@
 passons à :
 
-- [ ] **Dry Run** - Simulation complète sans exécution réelle
+- [ ] **Progress Monitor** - Barre progression temps réel avec ETA
 
 J'aimerais que tu code cette feature en suivant les consignes suivantes :
     - tu dois me produire un code professionnel

@@ -27,7 +27,7 @@
 - [x] **Pipeline Engine** - Exécution séquentielle/parallèle avec dépendances
 - [x] **Resume System** - Reprise intelligente après crash avec checkpoint
 - [x] **Dry Run** - Simulation complète sans exécution réelle ✅
-- [ ] **Progress Monitor** - Barre progression temps réel avec ETA
+- [x] **Progress Monitor** - Barre progression temps réel avec ETA ✅
 - [ ] **Resource Monitor** - Surveillance CPU/RAM/réseau avec throttling
 - [ ] **Stage Selector** - Exécution modules individuels avec validation
 - [ ] **Config Override** - Surcharge parameters via CLI
