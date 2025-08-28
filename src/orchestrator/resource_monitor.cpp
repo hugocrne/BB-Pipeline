@@ -25,10 +25,16 @@
 #pragma comment(lib, "psapi.lib")
 #else
 #include <sys/resource.h>
-#include <sys/sysinfo.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
+#ifdef __linux__
+#include <sys/sysinfo.h>
 #include <proc/readproc.h>
+#endif
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#endif
 #include <ifaddrs.h>
 #include <net/if.h>
 #endif

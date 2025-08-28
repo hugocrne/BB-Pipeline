@@ -52,6 +52,16 @@ find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
 find_package(ZLIB REQUIRED)
 pkg_check_modules(YAMLCPP REQUIRED yaml-cpp)
+find_package(nlohmann_json REQUIRED)
+
+# --- Additional dependencies for Kill Switch
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CRC32C crc32c)
+if(NOT CRC32C_FOUND)
+    # EN: Fall back to built-in implementation if crc32c not found
+    # FR: Utiliser l'implémentation intégrée si crc32c n'est pas trouvé
+    message(STATUS "crc32c not found, using built-in checksum implementation")
+endif()
 
 # --- Include directories for new modular structure
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -73,6 +83,7 @@ add_library(bbp-core
   src/infrastructure/networking/cache_system.cpp
   src/infrastructure/threading/thread_pool.cpp
   src/infrastructure/config/config_manager.cpp
+  src/infrastructure/cli/config_override.cpp
   src/infrastructure/system/signal_handler.cpp
   src/infrastructure/system/memory_manager.cpp
   src/infrastructure/system/error_recovery.cpp
@@ -83,10 +94,12 @@ add_library(bbp-core
   src/csv/delta_compression.cpp
   src/csv/query_engine.cpp
   src/orchestrator/pipeline_engine.cpp
-  src/orchestrator/resume_system.cpp
-  src/orchestrator/dry_run_system.cpp
-  src/orchestrator/progress_monitor.cpp
-  src/orchestrator/resource_monitor.cpp
+  # src/orchestrator/resume_system.cpp
+  # src/orchestrator/dry_run_system.cpp
+  # src/orchestrator/progress_monitor.cpp
+  # src/orchestrator/resource_monitor.cpp
+  src/orchestrator/stage_selector.cpp
+  src/orchestrator/kill_switch.cpp
 )
 target_link_libraries(bbp-core PUBLIC
   OpenSSL::SSL
@@ -95,6 +108,7 @@ target_link_libraries(bbp-core PUBLIC
   Threads::Threads
   ZLIB::ZLIB
   ${YAMLCPP_LIBRARIES}
+  nlohmann_json::nlohmann_json
 )
 target_link_directories(bbp-core PUBLIC ${YAMLCPP_LIBRARY_DIRS})
 target_include_directories(bbp-core PUBLIC ${YAMLCPP_INCLUDE_DIRS})

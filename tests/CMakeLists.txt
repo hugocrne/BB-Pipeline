@@ -23,6 +23,9 @@ set(TEST_SOURCES
     test_dry_run_system.cpp
     test_progress_monitor.cpp
     test_resource_monitor.cpp
+    test_stage_selector.cpp
+    test_config_override_simple.cpp
+    test_kill_switch.cpp
 )
 
 # --- Create test executables
@@ -55,6 +58,11 @@ add_test(NAME test_error_recovery_simple COMMAND test_error_recovery_simple)
 add_executable(test_merger_engine_simple test_merger_engine_simple.cpp)
 target_link_libraries(test_merger_engine_simple bbp-core)
 add_test(NAME test_merger_engine_simple COMMAND test_merger_engine_simple)
+
+# --- Kill Switch simple test (without GoogleTest)
+add_executable(test_kill_switch_simple test_kill_switch_simple.cpp)
+target_link_libraries(test_kill_switch_simple bbp-core)
+add_test(NAME test_kill_switch_simple COMMAND test_kill_switch_simple)
 
 # --- Integration test (if main.cpp exists)
 # if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp)

@@ -17,6 +17,7 @@
 #include <atomic>
 #include <thread>
 #include <condition_variable>
+#include <random>
 #include <nlohmann/json.hpp>
 
 namespace BBP {

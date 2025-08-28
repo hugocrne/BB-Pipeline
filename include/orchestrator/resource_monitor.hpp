@@ -32,7 +32,6 @@
 #pragma comment(lib, "psapi.lib")
 #else
 #include <sys/resource.h>
-#include <sys/sysinfo.h>
 #include <unistd.h>
 #include <fstream>
 #include <dirent.h>
@@ -41,8 +40,15 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#ifdef __linux__
+#include <sys/sysinfo.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#endif
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#endif
 #endif
 
 namespace BBP {
