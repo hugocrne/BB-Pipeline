@@ -268,7 +268,7 @@ private:
     
     std::atomic<bool> initialized_{false};        // EN: Initialization flag / FR: Flag d'initialisation
     std::atomic<size_t> memory_limit_{SIZE_MAX};  // EN: Memory usage limit / FR: Limite d'utilisation mémoire
-    std::atomic<bool> detailed_tracking_{false};  // EN: Detailed tracking flag / FR: Flag de suivi détaillé
+    std::atomic<bool> detailed_tracking_{true};  // EN: Detailed tracking flag / FR: Flag de suivi détaillé
     
     std::chrono::system_clock::time_point start_time_; // EN: Manager creation time / FR: Temps de création du gestionnaire
     

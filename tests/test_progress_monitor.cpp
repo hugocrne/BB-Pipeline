@@ -225,7 +225,7 @@ TEST_F(ProgressMonitorTest, ProgressUpdates) {
     
     // EN: Test progress updates
     // FR: Tester les mises à jour de progression
-    monitor_->updateProgress("progress_task", 25);
+    monitor_->updateProgress("progress_task", 25.0);
     std::this_thread::sleep_for(20ms); // EN: Allow processing / FR: Permettre le traitement
     
     stats = monitor_->getOverallStatistics();
@@ -267,7 +267,7 @@ TEST_F(ProgressMonitorTest, ETACalculation) {
     
     // EN: Simulate some progress
     // FR: Simuler une certaine progression
-    monitor_->updateProgress("eta_task", 25);
+    monitor_->updateProgress("eta_task", 25.0);
     std::this_thread::sleep_for(100ms); // EN: Let some time pass / FR: Laisser passer du temps
     
     auto stats = monitor_->getOverallStatistics();
@@ -284,7 +284,7 @@ TEST_F(ProgressMonitorTest, ETACalculation) {
     // EN: Create progress history
     // FR: Créer un historique de progression
     for (int i = 10; i <= 50; i += 10) {
-        monitor_->updateProgress("eta_task", i);
+        monitor_->updateProgress("eta_task", static_cast<double>(i));
         std::this_thread::sleep_for(20ms);
     }
     
@@ -313,9 +313,9 @@ TEST_F(ProgressMonitorTest, MultipleTaskCoordination) {
     
     // EN: Update progress on multiple tasks
     // FR: Mettre à jour la progression sur plusieurs tâches
-    monitor_->updateProgress("multi_task1", 50);
-    monitor_->updateProgress("multi_task2", 100);
-    monitor_->updateProgress("multi_task3", 75);
+    monitor_->updateProgress("multi_task1", 50.0);
+    monitor_->updateProgress("multi_task2", 100.0);
+    monitor_->updateProgress("multi_task3", 75.0);
     
     std::this_thread::sleep_for(50ms);
     
@@ -351,7 +351,7 @@ TEST_F(ProgressMonitorTest, TaskCompletionAndFailure) {
     
     // EN: Test task completion
     // FR: Tester la completion de tâche
-    monitor_->updateProgress("complete_task", 100);
+    monitor_->updateProgress("complete_task", 100.0);
     monitor_->setTaskCompleted("complete_task");
     
     std::this_thread::sleep_for(50ms);
@@ -365,7 +365,7 @@ TEST_F(ProgressMonitorTest, TaskCompletionAndFailure) {
     
     // EN: Test task failure
     // FR: Tester l'échec de tâche
-    monitor_->updateProgress("fail_task", 50);
+    monitor_->updateProgress("fail_task", 50.0);
     monitor_->setTaskFailed("fail_task", "Test error message");
     
     std::this_thread::sleep_for(50ms);
@@ -427,7 +427,7 @@ TEST_F(ProgressMonitorTest, DisplayModes) {
     EXPECT_TRUE(monitor_->addTask(task));
     EXPECT_TRUE(monitor_->start());
     
-    monitor_->updateProgress("display_task", 50);
+    monitor_->updateProgress("display_task", 50.0);
     std::this_thread::sleep_for(20ms);
     
     // EN: Test simple progress bar
@@ -469,7 +469,7 @@ TEST_F(ProgressMonitorTest, CustomFormatter) {
     
     // EN: Set custom formatter
     // FR: Définir un formateur personnalisé
-    monitor_->setCustomFormatter([](const ProgressStatistics& stats, const ProgressMonitorConfig& config) {
+    monitor_->setCustomFormatter([](const ProgressStatistics& stats, const ProgressMonitorConfig&) {
         return "Custom: " + std::to_string(static_cast<int>(stats.current_progress)) + "% complete";
     });
     
@@ -477,7 +477,7 @@ TEST_F(ProgressMonitorTest, CustomFormatter) {
     monitor_->updateConfig(config_);
     monitor_->start();
     
-    monitor_->updateProgress("custom_task", 75);
+    monitor_->updateProgress("custom_task", 75.0);
     std::this_thread::sleep_for(20ms);
     
     std::string display = monitor_->getCurrentDisplayString();
@@ -496,8 +496,8 @@ TEST_F(ProgressMonitorTest, StatePersistence) {
     EXPECT_TRUE(monitor_->addTask(task2));
     EXPECT_TRUE(monitor_->start());
     
-    monitor_->updateProgress("persist_task1", 50);
-    monitor_->updateProgress("persist_task2", 150);
+    monitor_->updateProgress("persist_task1", 50.0);
+    monitor_->updateProgress("persist_task2", 150.0);
     
     // EN: Test state saving
     // FR: Tester la sauvegarde d'état
@@ -842,7 +842,7 @@ TEST_F(ProgressMonitorTest, ErrorHandling) {
     
     // EN: Test operations on non-running monitor
     // FR: Tester les opérations sur un moniteur non en cours d'exécution
-    monitor_->updateProgress("nonexistent_task", 50); // EN: Should not crash / FR: Ne devrait pas planter
+    monitor_->updateProgress("nonexistent_task", 50.0); // EN: Should not crash / FR: Ne devrait pas planter
     monitor_->setTaskCompleted("nonexistent_task"); // EN: Should not crash / FR: Ne devrait pas planter
     
     // EN: Test edge case values
@@ -853,7 +853,7 @@ TEST_F(ProgressMonitorTest, ErrorHandling) {
     
     // EN: Test progress beyond bounds
     // FR: Tester la progression au-delà des limites
-    monitor_->updateProgress("edge_task", 150); // EN: Should be clamped to 100 / FR: Devrait être limité à 100
+    monitor_->updateProgress("edge_task", 150.0); // EN: Should be clamped to 100 / FR: Devrait être limité à 100
     auto stats = monitor_->getTaskStatistics("edge_task");
     EXPECT_EQ(stats.completed_units, 100);
     

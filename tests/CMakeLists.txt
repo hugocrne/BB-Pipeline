@@ -33,12 +33,28 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     string(REPLACE ".cpp" "" TEST_NAME ${TEST_SOURCE})
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     
-    target_link_libraries(${TEST_NAME}
-        bbp-core
-        GTest::GTest
-        GTest::Main
-        pthread
-    )
+    # --- Check if test uses GoogleMock
+    if(${TEST_NAME} STREQUAL "test_resume_system" OR 
+       ${TEST_NAME} STREQUAL "test_dry_run_system" OR 
+       ${TEST_NAME} STREQUAL "test_kill_switch" OR
+       ${TEST_NAME} STREQUAL "test_stage_selector" OR
+       ${TEST_NAME} STREQUAL "test_progress_monitor" OR
+       ${TEST_NAME} STREQUAL "test_resource_monitor")
+        target_link_libraries(${TEST_NAME}
+            bbp-core
+            GTest::GTest
+            GTest::Main
+            /opt/homebrew/lib/libgmock.a
+            pthread
+        )
+    else()
+        target_link_libraries(${TEST_NAME}
+            bbp-core
+            GTest::GTest
+            GTest::Main
+            pthread
+        )
+    endif()
     
     # --- Add to CTest
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})

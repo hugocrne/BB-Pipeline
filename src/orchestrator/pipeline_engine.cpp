@@ -6,6 +6,7 @@
 #include <numeric>
 #include <set>
 #include <unordered_set>
+#include <unordered_map>
 #include <filesystem>
 #include <iomanip>
 
@@ -19,12 +20,64 @@ class PipelineEngine::PipelineEngineImpl {
 public:
     explicit PipelineEngineImpl(const Config& config) : config_(config) {}
     
-    std::string createPipeline(const std::vector<PipelineStageConfig>&) { return "test"; }
-    bool addStage(const std::string&, const PipelineStageConfig&) { return true; }
-    bool removeStage(const std::string&, const std::string&) { return true; }
-    bool updateStage(const std::string&, const PipelineStageConfig&) { return true; }
-    std::vector<std::string> getPipelineIds() const { return {}; }
-    std::optional<std::vector<PipelineStageConfig>> getPipelineStages(const std::string&) const { return std::nullopt; }
+    std::string createPipeline(const std::vector<PipelineStageConfig>& stages) { 
+        std::string pipeline_id = "pipeline_" + std::to_string(next_id_++);
+        pipelines_[pipeline_id] = stages;
+        return pipeline_id;
+    }
+    
+    bool addStage(const std::string& pipeline_id, const PipelineStageConfig& stage) { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it != pipelines_.end()) {
+            it->second.push_back(stage);
+            return true;
+        }
+        return false;
+    }
+    
+    bool removeStage(const std::string& pipeline_id, const std::string& stage_id) { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it != pipelines_.end()) {
+            auto& stages = it->second;
+            auto stage_it = std::find_if(stages.begin(), stages.end(),
+                [&stage_id](const PipelineStageConfig& s) { return s.id == stage_id; });
+            if (stage_it != stages.end()) {
+                stages.erase(stage_it);
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    bool updateStage(const std::string& pipeline_id, const PipelineStageConfig& stage) { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it != pipelines_.end()) {
+            auto& stages = it->second;
+            auto stage_it = std::find_if(stages.begin(), stages.end(),
+                [&stage](const PipelineStageConfig& s) { return s.id == stage.id; });
+            if (stage_it != stages.end()) {
+                *stage_it = stage;
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    std::vector<std::string> getPipelineIds() const { 
+        std::vector<std::string> ids;
+        for (const auto& [id, _] : pipelines_) {
+            ids.push_back(id);
+        }
+        return ids;
+    }
+    
+    std::optional<std::vector<PipelineStageConfig>> getPipelineStages(const std::string& pipeline_id) const { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it != pipelines_.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
     
     PipelineExecutionStatistics executePipeline(const std::string&, const PipelineExecutionConfig&) {
         PipelineExecutionStatistics stats;
@@ -58,9 +111,131 @@ public:
     std::optional<PipelineStageResult> getStageResult(const std::string&, const std::string&) const { return std::nullopt; }
     std::vector<PipelineStageResult> getAllStageResults(const std::string&) const { return {}; }
     
-    std::vector<std::string> getExecutionOrder(const std::string&) const { return {}; }
-    bool validateDependencies(const std::string&) const { return true; }
-    std::vector<std::string> detectCircularDependencies(const std::string&) const { return {}; }
+    std::vector<std::string> getExecutionOrder(const std::string& pipeline_id) const { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it == pipelines_.end()) return {};
+        
+        const auto& stages = it->second;
+        std::vector<std::string> result;
+        std::set<std::string> processed;
+        
+        // Simple topological sort simulation
+        // Add stages in order: no deps, then deps resolved
+        bool changed = true;
+        while (changed && processed.size() < stages.size()) {
+            changed = false;
+            for (const auto& stage : stages) {
+                if (processed.find(stage.id) != processed.end()) continue;
+                
+                // Check if all dependencies are already processed
+                bool can_add = true;
+                for (const auto& dep : stage.dependencies) {
+                    if (processed.find(dep) == processed.end()) {
+                        can_add = false;
+                        break;
+                    }
+                }
+                
+                if (can_add) {
+                    result.push_back(stage.id);
+                    processed.insert(stage.id);
+                    changed = true;
+                }
+            }
+        }
+        
+        return result;
+    }
+    bool validateDependencies(const std::string& pipeline_id) const { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it == pipelines_.end()) return true;
+        
+        const auto& stages = it->second;
+        
+        // Simple cycle detection: check if any stage depends transitively on itself
+        for (const auto& stage : stages) {
+            std::set<std::string> visited;
+            std::set<std::string> rec_stack;
+            if (hasCycleDFS(stage.id, stages, visited, rec_stack)) {
+                return false;  // Has cycle
+            }
+        }
+        return true;
+    }
+    
+private:
+    bool hasCycleDFS(const std::string& stage_id, const std::vector<PipelineStageConfig>& stages,
+                     std::set<std::string>& visited, std::set<std::string>& rec_stack) const {
+        visited.insert(stage_id);
+        rec_stack.insert(stage_id);
+        
+        // Find the stage config for this ID
+        auto stage_it = std::find_if(stages.begin(), stages.end(),
+            [&stage_id](const PipelineStageConfig& s) { return s.id == stage_id; });
+        if (stage_it == stages.end()) return false;
+        
+        // Check all dependencies
+        for (const auto& dep : stage_it->dependencies) {
+            if (visited.find(dep) == visited.end()) {
+                if (hasCycleDFS(dep, stages, visited, rec_stack)) return true;
+            } else if (rec_stack.find(dep) != rec_stack.end()) {
+                return true;  // Back edge found = cycle
+            }
+        }
+        
+        rec_stack.erase(stage_id);
+        return false;
+    }
+    
+    bool findCycleDFS(const std::string& stage_id, const std::vector<PipelineStageConfig>& stages,
+                      std::set<std::string>& visited, std::set<std::string>& rec_stack,
+                      std::vector<std::string>& path) const {
+        visited.insert(stage_id);
+        rec_stack.insert(stage_id);
+        path.push_back(stage_id);
+        
+        // Find the stage config for this ID
+        auto stage_it = std::find_if(stages.begin(), stages.end(),
+            [&stage_id](const PipelineStageConfig& s) { return s.id == stage_id; });
+        if (stage_it == stages.end()) {
+            path.pop_back();
+            return false;
+        }
+        
+        // Check all dependencies
+        for (const auto& dep : stage_it->dependencies) {
+            if (visited.find(dep) == visited.end()) {
+                if (findCycleDFS(dep, stages, visited, rec_stack, path)) return true;
+            } else if (rec_stack.find(dep) != rec_stack.end()) {
+                // Found cycle, add the dependency to complete the cycle
+                path.push_back(dep);
+                return true;
+            }
+        }
+        
+        rec_stack.erase(stage_id);
+        path.pop_back();
+        return false;
+    }
+    
+public:
+    std::vector<std::string> detectCircularDependencies(const std::string& pipeline_id) const { 
+        auto it = pipelines_.find(pipeline_id);
+        if (it == pipelines_.end()) return {};
+        
+        const auto& stages = it->second;
+        
+        // Find cycle and return the stages in the cycle
+        for (const auto& stage : stages) {
+            std::set<std::string> visited;
+            std::set<std::string> rec_stack;
+            std::vector<std::string> path;
+            if (findCycleDFS(stage.id, stages, visited, rec_stack, path)) {
+                return path;  // Return the cycle path
+            }
+        }
+        return {};
+    }
     
     PipelineEngine::ValidationResult validatePipeline(const std::string&) const {
         return {true, {}, {}};
@@ -93,6 +268,8 @@ public:
 
 private:
     PipelineEngine::Config config_;
+    std::unordered_map<std::string, std::vector<PipelineStageConfig>> pipelines_;
+    int next_id_ = 1;
 };
 
 // PipelineEngine implementations
@@ -246,6 +423,11 @@ std::string PipelineEngine::getStatus() const {
 void PipelineEngine::shutdown() {
     impl_->shutdown();
 }
+
+// EN: Note: Additional pipeline classes (PipelineTask, PipelineUtils, etc.)
+// FR: Note: Classes de pipeline supplémentaires (PipelineTask, PipelineUtils, etc.)
+// EN: need to be implemented in separate files to avoid conflicts
+// FR: doivent être implémentées dans des fichiers séparés pour éviter les conflits
 
 } // namespace Orchestrator
 } // namespace BBP

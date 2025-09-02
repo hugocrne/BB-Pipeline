@@ -348,7 +348,8 @@ public:
     CliParseResult parse(const std::vector<std::string>& arguments) {
         auto start_time = std::chrono::steady_clock::now();
         
-        CliParseResult result;
+        CliParseResult result{};
+        result.status = CliParseStatus::SUCCESS;  // Initialize status explicitly
         result.total_arguments_processed = arguments.size();
         
         emitEvent(ConfigOverrideEventType::PARSING_STARTED, "", 
@@ -393,7 +394,12 @@ public:
                                 "Parsed option: " + parse_option_result.first.option_name);
                     } else {
                         result.errors.push_back(parse_option_result.second);
-                        result.status = CliParseStatus::INVALID_OPTION;
+                        // Set specific status based on error type
+                        if (parse_option_result.second.find("requires a value") != std::string::npos) {
+                            result.status = CliParseStatus::MISSING_VALUE;
+                        } else {
+                            result.status = CliParseStatus::INVALID_OPTION;
+                        }
                     }
                     
                     i = parse_option_result.first.raw_values.size() > 1 ? i + 1 : i; // EN: Skip next arg if it was consumed / FR: Ignorer l'argument suivant s'il a été consommé

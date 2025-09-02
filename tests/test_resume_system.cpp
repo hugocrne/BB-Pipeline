@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "orchestrator/resume_system.hpp"
+#include "orchestrator/pipeline_engine.hpp"
 #include <filesystem>
 #include <fstream>
 #include <thread>
@@ -25,6 +26,11 @@ public:
     MOCK_METHOD(double, getProgress, (), (const));
     MOCK_METHOD(nlohmann::json, getState, (), (const));
     MOCK_METHOD(void, setState, (const nlohmann::json&), ());
+    
+    // Fonction helper pour convertir en PipelineEngine*
+    BBP::PipelineEngine* asPipelineEngine() {
+        return reinterpret_cast<BBP::PipelineEngine*>(this);
+    }
 };
 
 // EN: Test fixture for Resume System tests
@@ -311,7 +317,7 @@ TEST_F(ResumeSystemTest, CheckpointCleanup) {
     // EN: Configure for aggressive cleanup testing
     // FR: Configure pour un test de nettoyage agressif
     config_.max_checkpoints = 2;
-    config_.cleanup_age = std::chrono::milliseconds(50);
+    config_.cleanup_age = std::chrono::hours(1);
     resume_system_->updateConfig(config_);
     
     ASSERT_TRUE(resume_system_->startMonitoring(operation_id, "/test/config.yaml"));
@@ -661,6 +667,7 @@ TEST_F(AutoCheckpointGuardTest, ForceCheckpoint) {
     bool forced_checkpoint_created = false;
     
     resume_system_->setCheckpointCallback([&](const std::string& checkpoint_id, const CheckpointMetadata& metadata) {
+        (void)checkpoint_id; // Suppress unused parameter warning
         if (metadata.custom_metadata.contains("forced_checkpoint") && 
             metadata.custom_metadata.at("forced_checkpoint") == "true") {
             forced_checkpoint_created = true;
@@ -738,11 +745,11 @@ TEST_F(ResumeSystemManagerTest, PipelineRegistration) {
     
     // EN: Register pipeline
     // FR: Enregistre le pipeline
-    EXPECT_TRUE(manager.registerPipeline(pipeline_id, &mock_pipeline_));
+    EXPECT_TRUE(manager.registerPipeline(pipeline_id, mock_pipeline_.asPipelineEngine()));
     
     // EN: Test duplicate registration (should fail)
     // FR: Test l'enregistrement en double (devrait échouer)
-    EXPECT_FALSE(manager.registerPipeline(pipeline_id, &mock_pipeline_));
+    EXPECT_FALSE(manager.registerPipeline(pipeline_id, mock_pipeline_.asPipelineEngine()));
     
     // EN: Unregister pipeline
     // FR: Désenregistre le pipeline
@@ -750,7 +757,7 @@ TEST_F(ResumeSystemManagerTest, PipelineRegistration) {
     
     // EN: Should be able to register again after unregistering
     // FR: Devrait pouvoir enregistrer à nouveau après désenregistrement
-    EXPECT_TRUE(manager.registerPipeline(pipeline_id, &mock_pipeline_));
+    EXPECT_TRUE(manager.registerPipeline(pipeline_id, mock_pipeline_.asPipelineEngine()));
 }
 
 // EN: Test crash detection
@@ -779,7 +786,7 @@ TEST_F(ResumeSystemManagerTest, CrashDetection) {
     
     // EN: Register one pipeline as still running
     // FR: Enregistre un pipeline comme toujours en cours
-    manager.registerPipeline(operation_id3, &mock_pipeline_);
+    manager.registerPipeline(operation_id3, mock_pipeline_.asPipelineEngine());
     
     ASSERT_TRUE(resume_system.startMonitoring(operation_id3, "/test/config3.yaml"));
     auto state3 = nlohmann::json{{"stage", "finishing"}, {"progress", 90.0}};

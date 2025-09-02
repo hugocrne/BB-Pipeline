@@ -309,31 +309,32 @@ std::string MemoryManager::dumpPoolState() const {
 // EN: Internal allocation with tracking.
 // FR: Allocation interne avec suivi.
 void* MemoryManager::allocate_internal(size_t size, size_t alignment) {
-    // EN: Align size to the specified boundary
-    // FR: Aligne la taille sur la frontière spécifiée
-    size_t aligned_size = align_size(size + sizeof(BlockHeader), alignment);
+    // EN: The actual size needed is just the user request size, alignment is handled by find_best_fit_block
+    // FR: La taille réelle nécessaire est juste la taille demandée par l'utilisateur, l'alignement est géré par find_best_fit_block
+    size_t total_size = size + sizeof(BlockHeader);
     
     // EN: Check memory limit
     // FR: Vérifie la limite mémoire
-    if (stats_.current_used_bytes + aligned_size > memory_limit_.load()) {
+    if (stats_.current_used_bytes + total_size > memory_limit_.load()) {
         LOG_WARN("memory_manager", "Memory limit exceeded, allocation failed");
         return nullptr;
     }
     
-    // EN: Find suitable free block
-    // FR: Trouve un bloc libre approprié
-    BlockHeader* block = find_best_fit_block(aligned_size, alignment);
+    // EN: Find suitable free block (this will account for alignment padding)
+    // FR: Trouve un bloc libre approprié (ceci tiendra compte du padding d'alignement)
+    BlockHeader* block = find_best_fit_block(size, alignment);
     
     if (!block) {
-        // EN: Expand pool if needed
-        // FR: Étend le pool si nécessaire
-        if (!expand_pool(aligned_size)) {
+        // EN: Expand pool if needed - account for worst-case alignment padding
+        // FR: Étend le pool si nécessaire - tenir compte du padding d'alignement du pire cas
+        size_t required_size = total_size + alignment;
+        if (!expand_pool(required_size)) {
             LOG_ERROR("memory_manager", "Failed to expand pool for allocation of " + 
-                      std::to_string(aligned_size) + " bytes");
+                      std::to_string(required_size) + " bytes");
             return nullptr;
         }
         
-        block = find_best_fit_block(aligned_size, alignment);
+        block = find_best_fit_block(size, alignment);
         if (!block) {
             LOG_ERROR("memory_manager", "No suitable block found after pool expansion");
             return nullptr;
@@ -358,8 +359,8 @@ void* MemoryManager::allocate_internal(size_t size, size_t alignment) {
     
     // EN: Split block if it's significantly larger than needed
     // FR: Divise le bloc s'il est significativement plus grand que nécessaire
-    if (block->size > aligned_size + sizeof(BlockHeader) + 64) {
-        split_block(block, aligned_size);
+    if (block->size > size + sizeof(BlockHeader) + 64) {
+        split_block(block, size);
     }
     
     // EN: Mark block as allocated
@@ -369,10 +370,17 @@ void* MemoryManager::allocate_internal(size_t size, size_t alignment) {
     block->magic = BlockHeader::MAGIC_ALLOCATED;
     block->allocated_at = std::chrono::system_clock::now();
     
+    // EN: Calculate properly aligned user pointer
+    // FR: Calcule le pointeur utilisateur correctement aligné
+    uintptr_t user_addr = reinterpret_cast<uintptr_t>(block) + sizeof(BlockHeader);
+    uintptr_t misalignment = user_addr % alignment;
+    if (misalignment) {
+        user_addr += (alignment - misalignment);
+    }
+    void* user_ptr = reinterpret_cast<void*>(user_addr);
+    
     // EN: Update tracking
     // FR: Met à jour le suivi
-    void* user_ptr = reinterpret_cast<char*>(block) + sizeof(BlockHeader);
-    
     if (detailed_tracking_.load()) {
         allocated_blocks_[user_ptr] = block;
     }
@@ -383,14 +391,25 @@ void* MemoryManager::allocate_internal(size_t size, size_t alignment) {
 // EN: Internal deallocation with tracking.
 // FR: Désallocation interne avec suivi.
 void MemoryManager::deallocate_internal(void* ptr) {
-    // EN: Get block header from user pointer
-    // FR: Obtient l'en-tête du bloc depuis le pointeur utilisateur
-    BlockHeader* block = reinterpret_cast<BlockHeader*>(
-        reinterpret_cast<char*>(ptr) - sizeof(BlockHeader));
+    BlockHeader* block = nullptr;
+    
+    // EN: If detailed tracking is enabled, use it to find the block
+    // FR: Si le suivi détaillé est activé, l'utiliser pour trouver le bloc
+    if (detailed_tracking_.load()) {
+        auto it = allocated_blocks_.find(ptr);
+        if (it != allocated_blocks_.end()) {
+            block = it->second;
+        }
+    } else {
+        // EN: Try to get block header from user pointer (works only for unaligned allocations)
+        // FR: Essaie d'obtenir l'en-tête du bloc depuis le pointeur utilisateur (fonctionne seulement pour les allocations non-alignées)
+        block = reinterpret_cast<BlockHeader*>(
+            reinterpret_cast<char*>(ptr) - sizeof(BlockHeader));
+    }
     
     // EN: Validate block
     // FR: Valide le bloc
-    if (!validate_block_header(block) || block->is_free) {
+    if (!block || !validate_block_header(block) || block->is_free) {
         LOG_ERROR("memory_manager", "Invalid deallocation attempt");
         return;
     }
@@ -468,11 +487,21 @@ BlockHeader* MemoryManager::find_best_fit_block(size_t size, size_t alignment) {
     
     BlockHeader* current = free_list_head_;
     while (current) {
-        if (current->is_free && current->size >= size) {
-            // EN: Check alignment requirements
-            // FR: Vérifie les exigences d'alignement
-            void* user_ptr = reinterpret_cast<char*>(current) + sizeof(BlockHeader);
-            if (reinterpret_cast<uintptr_t>(user_ptr) % alignment == 0) {
+        if (current->is_free) {
+            // EN: Calculate user pointer address after header
+            // FR: Calcule l'adresse du pointeur utilisateur après l'en-tête
+            uintptr_t user_addr = reinterpret_cast<uintptr_t>(current) + sizeof(BlockHeader);
+            
+            // EN: Calculate padding needed for alignment
+            // FR: Calcule le padding nécessaire pour l'alignement
+            uintptr_t misalignment = user_addr % alignment;
+            size_t padding = misalignment ? (alignment - misalignment) : 0;
+            
+            // EN: Total space needed includes original size plus any alignment padding
+            // FR: L'espace total nécessaire inclut la taille originale plus le padding d'alignement
+            size_t total_needed = size + padding;
+            
+            if (current->size >= total_needed) {
                 if (current->size < best_size) {
                     best_block = current;
                     best_size = current->size;

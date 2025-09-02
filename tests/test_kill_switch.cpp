@@ -65,8 +65,13 @@ protected:
         test_config_.state_save_timeout = 200ms;
         test_config_.cleanup_timeout = 200ms;
         
+        BBP::Infrastructure::Logger::getInstance().info("TEST", "About to configure");
         kill_switch_->configure(test_config_);
+        BBP::Infrastructure::Logger::getInstance().info("TEST", "About to initialize");
         kill_switch_->initialize();
+        BBP::Infrastructure::Logger::getInstance().info("TEST", "About to call setEnabled(true)");
+        kill_switch_->setEnabled(true);
+        BBP::Infrastructure::Logger::getInstance().info("TEST", "Called setEnabled(true) successfully");
         
         // EN: Create mock objects
         // FR: Créer les objets mock
@@ -77,10 +82,9 @@ protected:
     }
 
     void TearDown() override {
-        // EN: Ensure Kill Switch is reset
-        // FR: S'assurer que le Kill Switch est remis à zéro
+        // EN: Ensure Kill Switch is reset (SetUp will handle re-enabling)
+        // FR: S'assurer que le Kill Switch est remis à zéro (SetUp se chargera de la réactivation)
         if (kill_switch_) {
-            kill_switch_->setEnabled(false);
             kill_switch_->reset();
         }
         

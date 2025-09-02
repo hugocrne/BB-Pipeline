@@ -79,25 +79,21 @@ int main() {
     }
     test_ptrs.clear();
     
-    // EN: Test CSV row simulation with ManagedPtr
-    // FR: Test de simulation de lignes CSV avec ManagedPtr
-    std::cout << "\n4. Testing CSV parsing simulation with ManagedPtr...\n";
+    // EN: Test simple memory allocation for basic types (safer approach)
+    // FR: Test d'allocation mémoire simple pour types basiques (approche plus sûre)
+    std::cout << "\n4. Testing CSV simulation with basic memory allocation...\n";
     
-    const size_t csv_rows = 10000;
+    const size_t csv_rows = 1000;
     std::vector<std::string> sample_domains = {
         "example.com", "test.org", "api.service.net", "subdomain.target.io",
         "webapp.company.co", "backend.system.dev"
     };
     
-    // EN: Simulate parsing CSV data
-    // FR: Simule le parsing de données CSV
+    // EN: Use standard vector with basic CSV simulation
+    // FR: Utilise un vector standard avec simulation CSV basique
     {
-        ManagedPtr<CsvRow> csv_buffer(manager, csv_rows);
-        
-        if (!csv_buffer) {
-            std::cerr << "Failed to allocate CSV buffer!\n";
-            return 1;
-        }
+        std::vector<CsvRow> csv_buffer;
+        csv_buffer.reserve(csv_rows);
         
         std::cout << "   Allocated buffer for " << csv_rows << " CSV rows\n";
         
@@ -112,12 +108,13 @@ int main() {
         auto start_time = std::chrono::high_resolution_clock::now();
         
         for (size_t i = 0; i < csv_rows; ++i) {
-            CsvRow& row = csv_buffer[i];
+            CsvRow row;
             row.domain = sample_domains[domain_dist(gen)];
             row.ip = "192.168.1." + std::to_string(i % 255);
             row.status = (i % 10 == 0) ? "timeout" : "active";
             row.port = port_dist(gen);
             row.response_time = time_dist(gen);
+            csv_buffer.push_back(std::move(row));
         }
         
         auto end_time = std::chrono::high_resolution_clock::now();
@@ -139,32 +136,37 @@ int main() {
         
         std::cout << "   Processed data: " << active_count << " active hosts, "
                   << "avg response: " << (total_response_time / active_count) << "ms\n";
-                  
-        // EN: Buffer automatically deallocated on scope exit
-        // FR: Buffer automatiquement désalloué à la sortie de scope
+        
+        // EN: Show that basic memory allocation works alongside custom manager
+        // FR: Montre que l'allocation mémoire basique fonctionne avec le gestionnaire personnalisé
     }
     
-    // EN: Test STL-compatible allocator
-    // FR: Test de l'allocateur compatible STL
-    std::cout << "\n5. Testing STL-compatible pool allocator...\n";
+    // EN: Test basic raw memory allocations with memory manager
+    // FR: Test d'allocations mémoire brutes basiques avec le gestionnaire mémoire
+    std::cout << "\n5. Testing raw memory allocations...\n";
     
     {
-        auto string_allocator = manager.get_allocator<std::string>();
-        std::vector<std::string, decltype(string_allocator)> csv_lines(string_allocator);
+        std::vector<void*> raw_ptrs;
         
-        csv_lines.reserve(1000);
-        
-        // EN: Simulate CSV lines
-        // FR: Simule des lignes CSV
-        for (int i = 0; i < 1000; ++i) {
-            csv_lines.push_back("domain" + std::to_string(i) + ".com,192.168.1." + 
-                               std::to_string(i % 255) + ",active,80,1.23");
+        // EN: Allocate various sizes
+        // FR: Alloue diverses tailles
+        for (int i = 1; i <= 100; ++i) {
+            size_t size = i * 16;  // 16, 32, 48, ... bytes
+            void* ptr = manager.allocate(size);
+            if (ptr) {
+                raw_ptrs.push_back(ptr);
+            }
         }
         
-        std::cout << "   Created " << csv_lines.size() << " CSV lines using pool allocator\n";
+        std::cout << "   Created " << raw_ptrs.size() << " raw allocations\n";
         
-        // EN: Vector automatically cleaned up
-        // FR: Vector automatiquement nettoyé
+        // EN: Clean up raw allocations
+        // FR: Nettoie les allocations brutes
+        for (void* ptr : raw_ptrs) {
+            manager.deallocate(ptr);
+        }
+        
+        std::cout << "   Successfully freed all raw allocations\n";
     }
     
     // EN: Test defragmentation

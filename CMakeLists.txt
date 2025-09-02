@@ -94,10 +94,14 @@ add_library(bbp-core
   src/csv/delta_compression.cpp
   src/csv/query_engine.cpp
   src/orchestrator/pipeline_engine.cpp
-  # src/orchestrator/resume_system.cpp
-  # src/orchestrator/dry_run_system.cpp
-  # src/orchestrator/progress_monitor.cpp
-  # src/orchestrator/resource_monitor.cpp
+  src/orchestrator/pipeline_task.cpp
+  src/orchestrator/pipeline_execution_context.cpp
+  src/orchestrator/pipeline_dependency_resolver.cpp
+  src/orchestrator/pipeline_utils.cpp
+  src/orchestrator/resume_system.cpp
+  src/orchestrator/dry_run_system.cpp
+  src/orchestrator/progress_monitor.cpp
+  src/orchestrator/resource_monitor.cpp
   src/orchestrator/stage_selector.cpp
   src/orchestrator/kill_switch.cpp
 )
